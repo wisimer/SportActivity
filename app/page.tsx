@@ -321,7 +321,7 @@ export default function SportsActivityPage() {
         throw new Error("生成失败")
       }
     } catch (error) {
-      console.error("生成海报失败:", error)
+      console.error("生成失败:", error)
 
 
       alert("生成失败，请重试")
@@ -335,7 +335,7 @@ export default function SportsActivityPage() {
 
     const link = document.createElement("a")
     link.href = generatedImage
-    link.download = `2025成都世运会海报_${sportTypes.find((s) => s.id === selectedSport)?.name}_${Date.now()}.png`
+    link.download = `2025成都世运会个性头像_${sportTypes.find((s) => s.id === selectedSport)?.name}_${Date.now()}.png`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -403,7 +403,7 @@ export default function SportsActivityPage() {
           <p className="text-white/90 text-sm leading-relaxed">
             上传你的照片，选择运动类型
             <br />
-            AI为你生成专属运动海报
+            AI为你生成专属运动头像
           </p>
         </div>
 
@@ -546,7 +546,7 @@ export default function SportsActivityPage() {
               <div className="text-center space-y-4">
                 <div className="animate-spin mx-auto w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full"></div>
                 <div>
-                  <p className="font-medium text-gray-800 mb-2">AI正在生成你的专属海报...</p>
+                  <p className="font-medium text-gray-800 mb-2">AI正在生成你的专属头像...</p>
                   <Progress value={progress} className="w-full h-2" />
                   <p className="text-sm text-gray-600 mt-2">{progress}% 完成</p>
                 </div>
@@ -561,7 +561,7 @@ export default function SportsActivityPage() {
             <CardHeader className="text-center pb-4 bg-gradient-to-r from-green-50 to-blue-50">
               <CardTitle className="text-lg flex items-center justify-center gap-2 text-gray-800">
                 <Sparkles className="w-5 h-5" />
-                你的专属世运会海报
+                你的专属世运会头像
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
@@ -569,7 +569,7 @@ export default function SportsActivityPage() {
                 <div className="relative rounded-xl overflow-hidden shadow-xl">
                   <Image
                     src={generatedImage || "/placeholder.svg"}
-                    alt="生成的运动海报"
+                    alt="生成的运动头像"
                     width={400}
                     height={600}
                     className="w-full h-auto"
@@ -581,7 +581,7 @@ export default function SportsActivityPage() {
                     className="flex-1 h-12 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-lg"
                   >
                     <Download className="w-5 h-5 mr-2" />
-                    下载海报
+                    下载头像
                   </Button>
                 </div>
               </div>
@@ -611,7 +611,7 @@ export default function SportsActivityPage() {
             ) : (
               <>
                 <Sparkles className="w-5 h-5 mr-2" />
-                生成专属世运会海报
+                生成专属世运会头像
               </>
             )}
           </Button>
@@ -727,11 +727,11 @@ export default function SportsActivityPage() {
         <div className="text-center text-white/80 text-xs space-y-2 pb-6">
           <p className="flex items-center justify-center gap-1">
             <Star className="w-3 h-3" />
-            上传的照片仅用于海报生成，不会保存
+            上传的照片仅用于头像生成，不会保存
           </p>
           <p className="flex items-center justify-center gap-1">
             <Trophy className="w-3 h-3" />
-            每10分钟只能生成一次海报，请耐心等待
+            每10分钟只能生成一次头像，请耐心等待
           </p>
         </div>
       </div>

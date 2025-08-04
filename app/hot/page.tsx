@@ -96,7 +96,7 @@ export default function PopularAvatarsPage() {
           </Link>
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-white drop-shadow-lg">热门头像</h1>
-            <p className="text-white/80 text-sm">发现精彩的运动海报作品</p>
+            <p className="text-white/80 text-sm">发现精彩的运动头像作品</p>
           </div>
         </div>
 
@@ -108,7 +108,7 @@ export default function PopularAvatarsPage() {
                 <div className="relative aspect-[1/1] bg-gray-100">
                   <Image
                     src={avatar.img_url || "/placeholder.svg?height=225&width=225&text=热门头像"}
-                    alt={`${avatar.sportName}海报`}
+                    alt={`${avatar.sportName}头像`}
                     fill
                     className="object-cover"
                   />
