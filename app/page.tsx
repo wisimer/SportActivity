@@ -172,11 +172,6 @@ export default function SportsActivityPage() {
     return tasks.length > 0 ? tasks[0] : null
   }, [tasks])
 
-  // 判断是否应该显示生成按钮
-  const shouldShowGenerateButton = useMemo(() => {
-    if (!latestTask) return true
-    return latestTask.status === "failed"
-  }, [latestTask])
 
   const filteredSports = useMemo(() => {
     let filtered = sportTypes
@@ -595,7 +590,7 @@ export default function SportsActivityPage() {
         )}
 
         {/* 生成按钮 */}
-        {shouldShowGenerateButton && !generatedImage && (
+        { (
           <Button
             onClick={handleGenerate}
             disabled={!selectedImage || !selectedSport || isGenerating || !rateLimit.canRequest}
