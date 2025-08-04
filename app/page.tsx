@@ -62,7 +62,7 @@ const categories = Array.from(new Set(sportTypes.map((sport) => sport.category))
 // 任务管理工具函数
 const TASKS_STORAGE_KEY = "sports_tasks"
 const RATE_LIMIT_KEY = "last_request_time"
-const RATE_LIMIT_DURATION = 10 * 1000// 10 * 60 * 1000 // 10分钟
+const RATE_LIMIT_DURATION = 20 * 1000// 10 * 60 * 1000 // 10分钟
 
 const saveTasks = (tasks: Task[]) => {
   localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks))
@@ -210,7 +210,7 @@ export default function SportsActivityPage() {
     const rateLimitCheck = checkRateLimit()
     if (!rateLimitCheck.canRequest) {
       const minutes = Math.ceil(rateLimitCheck.remainingTime / 60000)
-      alert(`请等待 ${minutes} 分钟后再试`)
+      alert(`活动火爆进行中，请等待 ${minutes} 分钟后再试`)
       return
     }
 
@@ -598,7 +598,7 @@ export default function SportsActivityPage() {
             ) : !rateLimit.canRequest ? (
               <>
                 <Clock className="w-5 h-5 mr-2" />
-                请等待 {formatRemainingTime(rateLimit.remainingTime)}
+                活动火爆进行中，请等待 {formatRemainingTime(rateLimit.remainingTime)}
               </>
             ) : !selectedImage || !selectedSport ? (
               "请完成上述步骤"
@@ -647,7 +647,7 @@ export default function SportsActivityPage() {
                           <div>
                             <p className="text-sm font-medium text-yellow-800">请稍等片刻</p>
                             <p className="text-xs text-yellow-600">
-                              还需等待 {formatRemainingTime(rateLimit.remainingTime)} 后才能发起新请求
+                              活动火爆进行中，请等待 {formatRemainingTime(rateLimit.remainingTime)} 
                             </p>
                           </div>
                         </div>
@@ -722,10 +722,6 @@ export default function SportsActivityPage() {
           <p className="flex items-center justify-center gap-1">
             <Star className="w-3 h-3" />
             上传的照片仅用于头像生成，不会保存
-          </p>
-          <p className="flex items-center justify-center gap-1">
-            <Trophy className="w-3 h-3" />
-            每10分钟只能生成一次头像，请耐心等待
           </p>
         </div>
       </div>
