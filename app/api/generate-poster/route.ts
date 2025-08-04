@@ -18,6 +18,10 @@ const SERVICE = "cv";
 export async function POST(request: NextRequest) {
   try {
     const { image, sportType } = await request.json()
+
+    // image 是 base64 字符串，需要去掉前缀
+    const base64Image = image.replace(/^data:image\/\w+;base64,/, '');
+
     let prompt = `根据这张图片，制作一张Q版3D卡通风格的大头表情包图片，使用里面人物的面貌特征，保留脸部和发型特征，人物的服装更换为更合适${sportType}的搭配。图片右上角写着“${sportType}”的字。人物姿势为${sportType}运动的动作。添加符合项目的环境元素（如泳池波浪线/田径跑道），并且只有一个人物角色，不要出现其他人物角色。`;
     console.log(" prompt : " + prompt)
     // 这里的坑，动态拼接总是提示 Text Risk Not Pass。把四川观察去掉就可以了。
@@ -36,7 +40,7 @@ export async function POST(request: NextRequest) {
       req_key: "jimeng_i2i_v30",
       prompt: prompt,
       binary_data_base64: [
-        image.substring(23)
+        base64Image
       ],
       return_url: true,
       width: 1024,

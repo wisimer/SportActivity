@@ -287,7 +287,7 @@ export default function SportsActivityPage() {
         },
         body: JSON.stringify({
           image: selectedImage.startsWith('data:') ? selectedImage : btoa(selectedImage),
-          sportType: sportInfo.name,
+          sportType: selectedSportInfo.name,
         }),
       })
 
@@ -580,7 +580,7 @@ export default function SportsActivityPage() {
         {/* 生成结果 */}
         {generatedImage && (
           <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm overflow-hidden">
-            <CardHeader className="text-center pb-4 bg-gradient-to-r from-green-50 to-blue-50">
+            <CardHeader className="text-center pb-4">
               <CardTitle className="text-lg flex items-center justify-center gap-2 text-gray-800">
                 <Sparkles className="w-5 h-5" />
                 你的专属世运会头像
