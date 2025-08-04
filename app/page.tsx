@@ -297,7 +297,7 @@ export default function SportsActivityPage() {
     setGeneratedImage(null)
     setProgress(0)
     setSearchTerm("")
-    setSelectedCategory("全部")
+    setSelectedCategory("球类运动")
   }
 
   const handleViewImage = (imageUrl: string) => {
@@ -540,6 +540,14 @@ export default function SportsActivityPage() {
                   >
                     <Download className="w-5 h-5 mr-2" />
                     下载头像
+                  </Button>
+
+                  <Button
+                    onClick={resetAll}
+                    variant="outline"
+                    className="h-12 px-6 border-2 hover:bg-gray-50 bg-transparent"
+                  >
+                    重新制作
                   </Button>
                 </div>
               </div>
