@@ -369,16 +369,24 @@ export default function SportsActivityPage() {
   const selectedSportInfo = sportTypes.find((sport) => sport.id === selectedSport)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-400 via-red-500 to-pink-600 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-[#B4452B] via-[#D36B4F] to-[#F19B80] relative overflow-hidden">
+     {/* 背景图片和渐变 */}
+      <div className="absolute inset-0 z-0">
+        {/* 顶部背景图片 */}
+        <div className="absolute top-0 left-0 right-0 h-180 overflow-hidden">
+          <Image
+            src="/images/header.jpeg"
+            alt="3D卡通运动员背景"
+            fill
+            className="object-cover object-center"
+            priority
+          />
+        </div>
 
-      {/* 3D背景 */}
-      {/* <div className="absolute inset-0 z-0">
-        <Background3D />
-      </div> */}
+        {/* 渐变过渡层 */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#B4452B]/60 via-[#D36B4F]/70 to-[#F19B80]"></div>
 
-      {/* 渐变遮罩 */}
-      {/* <div className="absolute inset-0 z-10 bg-gradient-to-br from-orange-400/80 via-red-500/80 to-pink-600/80"></div> */}
-
+      </div>
       {/* 音乐播放器 */}
       <MusicPlayer />
 
