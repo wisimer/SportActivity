@@ -122,7 +122,7 @@ export default function SportsActivityPage() {
         })
       }, 200)
 
-      const response = await fetch("/api/generate-poster", {
+      const generateResponse = await fetch("/api/generate-poster", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -132,11 +132,27 @@ export default function SportsActivityPage() {
           sportType: selectedSport,
         }),
       })
+      console.log("generateResponse : " + JSON.stringify(generateResponse))
 
-      if (response.ok) {
-        const data = await response.json()
-        setGeneratedImage(data.imageUrl)
-        setProgress(100)
+      if (generateResponse.ok) {
+        const data = await generateResponse.json()
+
+        const response = await fetch("/api/query-task", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            taskId: data["data"]["task_id"]
+          }),
+        })
+
+        console.log("response : " + response)
+
+        if (response.ok) {
+          setProgress(100)
+        }
+
       } else {
         throw new Error("生成失败")
       }
@@ -319,11 +335,10 @@ export default function SportsActivityPage() {
                   <button
                     key={sport.id}
                     onClick={() => setSelectedSport(sport.id)}
-                    className={`p-3 rounded-lg border-2 text-left transition-all duration-200 ${
-                      isSelected
-                        ? "border-blue-500 bg-blue-50 shadow-md transform scale-[1.02]"
-                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                    }`}
+                    className={`p-3 rounded-lg border-2 text-left transition-all duration-200 ${isSelected
+                      ? "border-blue-500 bg-blue-50 shadow-md transform scale-[1.02]"
+                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                      }`}
                   >
                     <div className="flex items-center gap-2">
                       <div className={`w-3 h-3 rounded-full ${sport.color}`}></div>

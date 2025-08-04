@@ -9,12 +9,10 @@ import crypto from 'crypto';
 import querystring from 'querystring';
 import { post } from "@/lib/api";
 import axios from "axios";
+import { formatQuery, signV4Request } from '@/app/api/jimeng';
 
-const VOLC_ACCESSKEY = "AKLTOGYxYThjYjBmNzQ0NGE0YWE5ZDAwMjcyMWQxZThjOGQ"
-const VOLC_SECRETKEY = "WlRneE9HSmpNV0kxWXprM05HTXpNbUZrTVdZeU5XSXpPR1poTXpneE5UYw=="
-const HOST = "visual.volcengineapi.com"
-const REGION = "cn-beijing"
-const ENDPOINT = "https://visual.volcengineapi.com"
+const VOLC_ACCESSKEY = process.env.VOLC_ACCESSKEY
+const VOLC_SECRETKEY = process.env.VOLC_SECRETKEY
 const SERVICE = "cv";
 
 export async function POST(request: NextRequest) {
@@ -24,8 +22,8 @@ export async function POST(request: NextRequest) {
 
     // 查询参数
     const queryParams = {
-      'Action': 'Seed3LSingleIPSubmitTask',
-      'Version': '2024-06-06'
+      'Action': 'CVSync2AsyncSubmitTask',
+      'Version': '2022-08-31'
     };
     const formattedQuery = formatQuery(queryParams);
 
@@ -50,33 +48,35 @@ export async function POST(request: NextRequest) {
       formattedBody
     );
 
-    await fetch(requestUrl, {
+    const response = fetch(requestUrl, {
       method: 'POST',
       headers: headers,
       body: formattedBody
-    }).then(async response => {
-      const readableStreamResponse = await response;
-      const data = await readableStreamResponse.json();
-      console.log(" data : " + JSON.stringify(data))
-    }).catch(err => {
-      console.log(err)
-    })
-
-    // 这里结果只返回了任务id，需要后端自己去查询任务结果。
-    // {"code":10000,"data":{"task_id":"7392616336519610409"},"message":"Success","request_id":"20240720103939AF0029465CF6A74E51EC","status":10000,"time_elapsed":"104.852309ms"}
-
-    // 根据运动类型返回不同的模拟海报
-    const mockPosters = {
-      aviation: "/placeholder.svg?height=600&width=400&text=航空运动海报",
-      football: "/placeholder.svg?height=600&width=400&text=橄榄球海报",
-      archery: "/placeholder.svg?height=600&width=400&text=射箭海报",
+    });
+    if (response == null) {
+      return NextResponse.json({
+        success: false,
+        message: "网络异常，请稍后再试",
+      })
     }
 
-    const generatedImageUrl = mockPosters[sportType as keyof typeof mockPosters] || mockPosters.aviation
+    const readableStreamResponse = await response;
+    const data = await readableStreamResponse.json();
+    console.log(" data : " + JSON.stringify(data))
+
+    if (data == null || data == undefined || data.code !== 10000) {
+      return NextResponse.json({
+        success: false,
+        message: "图片生成失败，请稍后再试",
+      })
+    }
+
+    // 这里结果只返回了任务id，需要后端自己去查询任务结果。
+    // {"ResponseMetadata":{"Action":"Seed3LSingleIPSubmitTask","Region":"cn-beijing","RequestId":"202508041824546C706D98EEFEF37CE4C7","Service":"cv","Version":"2024-06-06"},"Result":{"code":10000,"data":{"task_id":"10380005695761601172"},"message":"Success","request_id":"202508041824546C706D98EEFEF37CE4C7","status":10000,"time_elapsed":"70.333439ms"}}
 
     return NextResponse.json({
       success: true,
-      imageUrl: generatedImageUrl,
+      data: data["data"],
       message: "海报生成成功",
     })
   } catch (error) {
@@ -87,81 +87,3 @@ export async function POST(request: NextRequest) {
 
 
 
-
-
-
-// 辅助函数：生成签名密钥
-function getSignatureKey(key: string, dateStamp: string, regionName: string, serviceName: string): Buffer {
-  const kDate = crypto.createHmac('sha256', key).update(dateStamp).digest();
-  const kRegion = crypto.createHmac('sha256', kDate).update(regionName).digest();
-  const kService = crypto.createHmac('sha256', kRegion).update(serviceName).digest();
-  const kSigning = crypto.createHmac('sha256', kService).update('request').digest();
-  return kSigning;
-}
-
-// 格式化查询参数
-function formatQuery(parameters: Record<string, string>): string {
-  const sortedKeys = Object.keys(parameters).sort();
-  return sortedKeys.map(key => `${key}=${parameters[key]}`).join('&');
-}
-
-// 火山引擎V4签名算法
-function signV4Request(
-  accessKey: string,
-  secretKey: string,
-  service: string,
-  reqQuery: string,
-  reqBody: string
-): { headers: Record<string, string>; requestUrl: string } {
-  const t = new Date();
-  const currentDate = t.toISOString().replace(/[:\-]|\.\d{3}/g, '');
-  const datestamp = currentDate.substring(0, 8);
-
-  const method = 'POST';
-  const canonicalUri = '/';
-  const canonicalQuerystring = reqQuery;
-  const signedHeaders = 'content-type;host;x-content-sha256;x-date';
-  const payloadHash = crypto.createHash('sha256').update(reqBody).digest('hex');
-  const contentType = 'application/json';
-
-  const canonicalHeaders = [
-    `content-type:${contentType}`,
-    `host:${HOST}`,
-    `x-content-sha256:${payloadHash}`,
-    `x-date:${currentDate}`
-  ].join('\n') + '\n';
-
-  const canonicalRequest = [
-    method,
-    canonicalUri,
-    canonicalQuerystring,
-    canonicalHeaders,
-    signedHeaders,
-    payloadHash
-  ].join('\n');
-
-  const algorithm = 'HMAC-SHA256';
-  const credentialScope = `${datestamp}/${REGION}/${service}/request`;
-  const stringToSign = [
-    algorithm,
-    currentDate,
-    credentialScope,
-    crypto.createHash('sha256').update(canonicalRequest).digest('hex')
-  ].join('\n');
-
-  const signingKey = getSignatureKey(secretKey, datestamp, REGION, service);
-  const signature = crypto.createHmac('sha256', signingKey).update(stringToSign).digest('hex');
-
-  const authorizationHeader = `${algorithm} Credential=${accessKey}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
-
-  const headers = {
-    'X-Date': currentDate,
-    'Authorization': authorizationHeader,
-    'X-Content-Sha256': payloadHash,
-    'Content-Type': contentType
-  };
-
-  const requestUrl = `${ENDPOINT}?${canonicalQuerystring}`;
-
-  return { headers, requestUrl };
-}
