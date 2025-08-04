@@ -18,7 +18,11 @@ const SERVICE = "cv";
 export async function POST(request: NextRequest) {
   try {
     const { image, sportType } = await request.json()
-    let prompt = `根据这张图片，制作一张Q版3D卡通风格的大头表情包图片，使用里面人物的面貌特征，保留脸部和发型特征，人物的服装更换为更合适${sportType}的搭配，胸前印着“四川观察”的方形徽章。图片右上角写着“${sportType}”的字。人物姿势为${sportType}运动的动作。`;
+    let prompt = `根据这张图片，制作一张Q版3D卡通风格的大头表情包图片，使用里面人物的面貌特征，保留脸部和发型特征，人物的服装更换为更合适${sportType}的搭配。图片右上角写着“${sportType}”的字。人物姿势为${sportType}运动的动作。添加符合项目的环境元素（如泳池波浪线/田径跑道），并且只有一个人物角色，不要出现其他人物角色。`;
+    console.log(" prompt : " + prompt)
+    // 这里的坑，动态拼接总是提示 Text Risk Not Pass。把四川观察去掉就可以了。
+    //  "根据这张图片，制作一张Q版3D卡通风格的大头表情包图片，使用里面人物的面貌特征，保留脸部和发型特征，人物的服装更换为更合适皮划艇的搭配，胸前印着“四川观察”的方形会长。图片右上角写着“皮划艇”三个字。人物姿势为皮划艇运动的动作。"  
+
 
     // 查询参数
     const queryParams = {

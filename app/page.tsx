@@ -122,6 +122,7 @@ export default function SportsActivityPage() {
         })
       }, 200)
 
+      const sportInfo = sportTypes.find((sport) => sport.id === selectedSport)
       const generateResponse = await fetch("/api/generate-poster", {
         method: "POST",
         headers: {
@@ -129,7 +130,7 @@ export default function SportsActivityPage() {
         },
         body: JSON.stringify({
           image: selectedImage.startsWith('data:') ? selectedImage : btoa(selectedImage),
-          sportType: selectedSport,
+          sportType: sportInfo.name,
         }),
       })
       console.log("generateResponse : " + JSON.stringify(generateResponse))

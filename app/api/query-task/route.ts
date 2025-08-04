@@ -19,11 +19,11 @@ export async function POST(request: NextRequest) {
     const bodyParams = {
       req_key: "jimeng_i2i_v30",
       task_id: taskId,
-      req_json: {
+      req_json: JSON.stringify({
         "logo_info":
           { "add_logo": true, "position": 0, "language": 0, "opacity": 0.3, "logo_text_content": "四川观察" },
         "return_url": true
-      }
+      })
     };
     const formattedBody = JSON.stringify(bodyParams);
 
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       body: formattedBody
     });
 
-    if (response == null ) {
+    if (response == null) {
       return NextResponse.json({
         success: false,
         message: "图片生成中，请稍后再试",
