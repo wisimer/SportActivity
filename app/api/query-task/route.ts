@@ -55,10 +55,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: data,
-      message: "海报生成成功",
+      message: "生成成功",
     })
   } catch (error) {
-    console.error("生成海报失败:", error)
+    console.error("生成失败:", error)
     return NextResponse.json({ success: false, message: "生成失败，请重试" }, { status: 500 })
   }
 }
