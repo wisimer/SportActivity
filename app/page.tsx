@@ -36,6 +36,8 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { Background3D } from "@/components/Background3D"
+import { MusicPlayer } from "@/components/MusicPlayer"
 
 // 任务接口定义
 interface Task {
@@ -368,6 +370,18 @@ export default function SportsActivityPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-400 via-red-500 to-pink-600 relative overflow-hidden">
+
+      {/* 3D背景 */}
+      {/* <div className="absolute inset-0 z-0">
+        <Background3D />
+      </div> */}
+
+      {/* 渐变遮罩 */}
+      {/* <div className="absolute inset-0 z-10 bg-gradient-to-br from-orange-400/80 via-red-500/80 to-pink-600/80"></div> */}
+
+      {/* 音乐播放器 */}
+      <MusicPlayer />
+
       {/* 动态背景装饰 */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-10 left-10 text-yellow-300/30 animate-bounce">
@@ -409,7 +423,7 @@ export default function SportsActivityPage() {
 
         {/* 图片上传区域 */}
         <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm overflow-hidden">
-          <CardHeader className="text-center pb-4 bg-gradient-to-r from-blue-50 to-purple-50">
+          <CardHeader className="text-center pb-4">
             <CardTitle className="text-lg flex items-center justify-center gap-2 text-gray-800">
               <Camera className="w-5 h-5" />
               上传自拍照
@@ -454,11 +468,11 @@ export default function SportsActivityPage() {
 
         {/* 运动类型选择 */}
         <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm overflow-hidden">
-          <CardHeader className="pb-4 bg-gradient-to-r from-green-50 to-blue-50">
+          <CardHeader>
             <CardTitle className="text-lg text-gray-800">选择运动类型</CardTitle>
             <CardDescription>从35种世运会项目中选择你最喜欢的</CardDescription>
           </CardHeader>
-          <CardContent className="p-6 space-y-4">
+          <CardContent className="pl-6 pr-6 space-y-4">
             {/* 搜索框 */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -590,7 +604,7 @@ export default function SportsActivityPage() {
         )}
 
         {/* 生成按钮 */}
-        { (
+        {(
           <Button
             onClick={handleGenerate}
             disabled={!selectedImage || !selectedSport || isGenerating || !rateLimit.canRequest}
