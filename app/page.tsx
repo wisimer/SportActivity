@@ -68,7 +68,7 @@ const sportTypes = [
 const categories = Array.from(new Set(sportTypes.map((sport) => sport.category)))
 
 export default function SportsActivityPage() {
-  const [selectedImage, setSelectedImage] = useState<string>("/images/吉祥物.png")
+  const [selectedImage, setSelectedImage] = useState<string>() // "/images/吉祥物.png"
   const [selectedSport, setSelectedSport] = useState<string>("")
   const [isUploading, setIsUploading] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -152,13 +152,14 @@ export default function SportsActivityPage() {
 
         if (response.ok) {
           setProgress(100)
+          setGeneratedImage(response.data.data.data.image_urls)
         }
 
       } else {
         throw new Error("生成失败")
       }
     } catch (error) {
-      console.error("生成海报失败:", error)
+      console.error("生成失败:", error)
       alert("生成失败，请重试")
     } finally {
       setIsGenerating(false)
