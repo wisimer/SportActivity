@@ -2,14 +2,49 @@
 
 import type React from "react"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Upload, Camera, Search, Trophy, Medal, Star, Download, Sparkles, Flame, X } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  Upload,
+  Camera,
+  Search,
+  Trophy,
+  Medal,
+  Star,
+  Download,
+  Sparkles,
+  Flame,
+  X,
+  List,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Eye,
+} from "lucide-react"
 import Image from "next/image"
+
+// 任务接口定义
+interface Task {
+  id: string
+  timestamp: number
+  sportType: string
+  sportName: string
+  status: "pending" | "completed" | "failed"
+  imageUrl?: string
+  error?: string
+}
 
 const sportTypes = [
   // 空中运动
@@ -67,8 +102,45 @@ const sportTypes = [
 
 const categories = Array.from(new Set(sportTypes.map((sport) => sport.category)))
 
+// 任务管理工具函数
+const TASKS_STORAGE_KEY = "sports_task"
+const RATE_LIMIT_KEY = "last_request_time"
+const RATE_LIMIT_DURATION = 10 * 60 * 1000 // 10分钟
+
+const saveTasks = (tasks: Task) => {
+  localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks))
+}
+
+const loadTasks = (): Task => {
+  try {
+    const stored = localStorage.getItem(TASKS_STORAGE_KEY)
+    return stored ? JSON.parse(stored) : {}
+  } catch {
+    return {}
+  }
+}
+
+const checkRateLimit = (): { canRequest: boolean; remainingTime: number } => {
+  const lastRequestTime = localStorage.getItem(RATE_LIMIT_KEY)
+  if (!lastRequestTime) {
+    return { canRequest: true, remainingTime: 0 }
+  }
+
+  const timeSinceLastRequest = Date.now() - Number.parseInt(lastRequestTime)
+  const remainingTime = RATE_LIMIT_DURATION - timeSinceLastRequest
+
+  return {
+    canRequest: remainingTime <= 0,
+    remainingTime: Math.max(0, remainingTime),
+  }
+}
+
+const setLastRequestTime = () => {
+  localStorage.setItem(RATE_LIMIT_KEY, Date.now().toString())
+}
+
 export default function SportsActivityPage() {
-  const [selectedImage, setSelectedImage] = useState<string>() // "/images/吉祥物.png"
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [selectedSport, setSelectedSport] = useState<string>("")
   const [isUploading, setIsUploading] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -76,6 +148,22 @@ export default function SportsActivityPage() {
   const [progress, setProgress] = useState(0)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string>("全部")
+  const [tasks, setTasks] = useState<Task|null>(null)
+  const [showTasks, setShowTasks] = useState(false)
+  const [rateLimit, setRateLimit] = useState({ canRequest: true, remainingTime: 0 })
+
+  // 加载任务和检查限流
+  useEffect(() => {
+    setTasks(loadTasks())
+    setRateLimit(checkRateLimit())
+
+    // 每秒更新限流状态
+    const interval = setInterval(() => {
+      setRateLimit(checkRateLimit())
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [])
 
   const filteredSports = useMemo(() => {
     let filtered = sportTypes
@@ -107,6 +195,29 @@ export default function SportsActivityPage() {
   const handleGenerate = async () => {
     if (!selectedImage || !selectedSport) return
 
+    // 检查限流
+    const rateLimitCheck = checkRateLimit()
+    if (!rateLimitCheck.canRequest) {
+      const minutes = Math.ceil(rateLimitCheck.remainingTime / 60000)
+      alert(`请等待 ${minutes} 分钟后再试`)
+      return
+    }
+
+    const selectedSportInfo = sportTypes.find((s) => s.id === selectedSport)
+    if (!selectedSportInfo) return
+
+    // 创建新任务
+    const newTask: Task = {
+      id: Date.now().toString(),
+      timestamp: Date.now(),
+      sportType: selectedSport,
+      sportName: selectedSportInfo.name,
+      status: "pending",
+    }
+
+    setTasks(newTask)
+    saveTasks(newTask)
+
     setIsGenerating(true)
     setProgress(0)
     setGeneratedImage(null)
@@ -121,8 +232,8 @@ export default function SportsActivityPage() {
           return prev + 10
         })
       }, 200)
-
       const sportInfo = sportTypes.find((sport) => sport.id === selectedSport)
+
       const generateResponse = await fetch("/api/generate-poster", {
         method: "POST",
         headers: {
@@ -133,10 +244,10 @@ export default function SportsActivityPage() {
           sportType: sportInfo.name,
         }),
       })
-      console.log("generateResponse : " + JSON.stringify(generateResponse))
 
       if (generateResponse.ok) {
         const data = await generateResponse.json()
+
 
         const response = await fetch("/api/query-task", {
           method: "POST",
@@ -148,18 +259,36 @@ export default function SportsActivityPage() {
           }),
         })
 
-        console.log("response : " + response)
 
         if (response.ok) {
           setProgress(100)
-          setGeneratedImage(response.data.data.data.image_urls)
+          const taskData = await response.json()
+          console.log("taskData : " + JSON.stringify(taskData))
+
+          setGeneratedImage(taskData.data.data.image_urls[0])
         }
 
+        // 更新任务状态为完成
+        const completedTask = { ...newTask, status: "completed" as const, imageUrl: data.imageUrl }
+        const finalTasks = updatedTasks.map((task) => (task.id === newTask.id ? completedTask : task))
+        setTasks(finalTasks)
+        saveTasks(finalTasks)
+
+        // 设置限流时间（只有成功时才设置）
+        setLastRequestTime()
+        setRateLimit(checkRateLimit())
       } else {
         throw new Error("生成失败")
       }
     } catch (error) {
-      console.error("生成失败:", error)
+      console.error("生成海报失败:", error)
+
+      // 更新任务状态为失败
+      const failedTask = { ...newTask, status: "failed" as const, error: "生成失败，请重试" }
+      const finalTasks = updatedTasks.map((task) => (task.id === newTask.id ? failedTask : task))
+      setTasks(finalTasks)
+      saveTasks(finalTasks)
+
       alert("生成失败，请重试")
     } finally {
       setIsGenerating(false)
@@ -184,6 +313,20 @@ export default function SportsActivityPage() {
     setProgress(0)
     setSearchTerm("")
     setSelectedCategory("全部")
+  }
+
+  const handleViewImage = (imageUrl: string) => {
+    window.open(imageUrl, "_blank")
+  }
+
+  const formatTime = (timestamp: number) => {
+    return new Date(timestamp).toLocaleString("zh-CN")
+  }
+
+  const formatRemainingTime = (ms: number) => {
+    const minutes = Math.floor(ms / 60000)
+    const seconds = Math.floor((ms % 60000) / 1000)
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`
   }
 
   const selectedSportInfo = sportTypes.find((sport) => sport.id === selectedSport)
@@ -212,7 +355,7 @@ export default function SportsActivityPage() {
       <div className="relative z-10 max-w-md mx-auto p-4 space-y-6">
         {/* 头部标题 */}
         <div className="text-center py-6">
-          <div className="flex justify-center mb-4">
+          <div className="flex justify-center items-center gap-4 mb-4">
             <Image
               src="/images/chengdu-logo.png"
               alt="2025成都世运会会徽"
@@ -220,6 +363,89 @@ export default function SportsActivityPage() {
               height={60}
               className="h-12 w-auto"
             />
+            {/* 我的任务按钮 */}
+            <Dialog open={showTasks} onOpenChange={setShowTasks}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/90 hover:bg-white border-white/50 text-gray-700 relative"
+                >
+                  <List className="w-4 h-4 mr-1" />
+                  我的任务
+                  {tasks.filter((t) => t.status === "pending").length > 0 && (
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                  )}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-sm mx-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <List className="w-5 h-5" />
+                    我的任务
+                  </DialogTitle>
+                  <DialogDescription>查看你的海报生成任务记录</DialogDescription>
+                </DialogHeader>
+                <div className="max-h-96 overflow-y-auto space-y-3">
+                  {tasks.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <List className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>暂无任务记录</p>
+                    </div>
+                  ) : (
+                    tasks.map((task) => (
+                      <Card key={task.id} className="border border-gray-200">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <div
+                                className={`w-3 h-3 rounded-full ${sportTypes.find((s) => s.id === task.sportType)?.color || "bg-gray-400"
+                                  }`}
+                              ></div>
+                              <span className="font-medium text-sm">{task.sportName}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {task.status === "pending" && (
+                                <div className="flex items-center gap-1 text-blue-600">
+                                  <Clock className="w-3 h-3 animate-spin" />
+                                  <span className="text-xs">生成中</span>
+                                </div>
+                              )}
+                              {task.status === "completed" && (
+                                <div className="flex items-center gap-1 text-green-600">
+                                  <CheckCircle className="w-3 h-3" />
+                                  <span className="text-xs">已完成</span>
+                                </div>
+                              )}
+                              {task.status === "failed" && (
+                                <div className="flex items-center gap-1 text-red-600">
+                                  <AlertCircle className="w-3 h-3" />
+                                  <span className="text-xs">失败</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-500 mb-3">{formatTime(task.timestamp)}</p>
+                          {task.status === "completed" && task.imageUrl && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleViewImage(task.imageUrl!)}
+                              className="w-full h-8 text-xs bg-blue-500 hover:bg-blue-600"
+                            >
+                              <Eye className="w-3 h-3 mr-1" />
+                              查看图片
+                            </Button>
+                          )}
+                          {task.status === "failed" && task.error && (
+                            <p className="text-xs text-red-500">{task.error}</p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
           <h1 className="text-3xl font-bold text-white mb-2 drop-shadow-lg">2025成都世运会</h1>
           <p className="text-white/90 text-sm leading-relaxed">
@@ -228,6 +454,23 @@ export default function SportsActivityPage() {
             AI为你生成专属运动海报
           </p>
         </div>
+
+        {/* 限流提示 */}
+        {!rateLimit.canRequest && (
+          <Card className="border-0 shadow-xl bg-yellow-50 border-yellow-200">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <Clock className="w-5 h-5 text-yellow-600" />
+                <div>
+                  <p className="text-sm font-medium text-yellow-800">请稍等片刻</p>
+                  <p className="text-xs text-yellow-600">
+                    还需等待 {formatRemainingTime(rateLimit.remainingTime)} 后才能发起新请求
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* 图片上传区域 */}
         <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm overflow-hidden">
@@ -422,13 +665,18 @@ export default function SportsActivityPage() {
         {!generatedImage && (
           <Button
             onClick={handleGenerate}
-            disabled={!selectedImage || !selectedSport || isGenerating}
+            disabled={!selectedImage || !selectedSport || isGenerating || !rateLimit.canRequest}
             className="w-full h-16 text-lg font-bold bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 hover:from-yellow-500 hover:via-orange-600 hover:to-red-600 text-white shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] transition-all duration-300"
           >
             {isGenerating ? (
               <>
                 <div className="animate-spin w-5 h-5 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
                 AI生成中...
+              </>
+            ) : !rateLimit.canRequest ? (
+              <>
+                <Clock className="w-5 h-5 mr-2" />
+                请等待 {formatRemainingTime(rateLimit.remainingTime)}
               </>
             ) : !selectedImage || !selectedSport ? (
               "请完成上述步骤"
@@ -449,7 +697,7 @@ export default function SportsActivityPage() {
           </p>
           <p className="flex items-center justify-center gap-1">
             <Trophy className="w-3 h-3" />
-            生成的海报可以保存到相册分享朋友圈
+            每10分钟只能生成一次海报，请耐心等待
           </p>
         </div>
       </div>
