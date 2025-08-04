@@ -11,12 +11,11 @@ import Link from "next/link"
 
 interface PopularAvatar {
   id: string
-  imageUrl: string
-  sportType: string
+  img_url: string
+  sport_type: string
   sportName: string
-  likes: number
-  downloads: number
-  createdAt: string
+  download_count: number
+  created_at: string
 }
 
 interface ApiResponse {
@@ -37,12 +36,14 @@ export default function PopularAvatarsPage() {
   const fetchAvatars = async (pageNum: number, reset = false) => {
     setLoading(true)
     try {
-      const params = new URLSearchParams({
-        pageNum: pageNum.toString(),
-        pageSize: "12"
-      })
 
-      const response = await fetch(`/api/hot-avatars?${params}`)
+
+      const response = await fetch(`/api/hot-avatars`, {
+        method: "POST", body: JSON.stringify({
+          pageNum: pageNum.toString(),
+          pageSize: "12"
+        })
+      })
       const data: ApiResponse = await response.json()
 
       if (reset) {
@@ -52,7 +53,6 @@ export default function PopularAvatarsPage() {
       }
 
       setHasMore(data.hasMore)
-      setTotal(data.total)
     } catch (error) {
       console.error("获取热门头像失败:", error)
     } finally {
@@ -63,7 +63,7 @@ export default function PopularAvatarsPage() {
   useEffect(() => {
     setPage(1)
     fetchAvatars(1, true)
-  }, [searchTerm, selectedSport])
+  }, [])
 
   const handleLoadMore = () => {
     const nextPage = page + 1
@@ -73,15 +73,15 @@ export default function PopularAvatarsPage() {
 
   const handleDownload = (avatar: PopularAvatar) => {
     const link = document.createElement("a")
-    link.href = avatar.imageUrl
+    link.href = avatar.img_url
     link.download = `热门头像_${avatar.sportName}_${avatar.id}.png`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
   }
 
-  const handleView = (imageUrl: string) => {
-    window.open(imageUrl, "_blank")
+  const handleView = (img_url: string) => {
+    window.open(img_url, "_blank")
   }
 
   return (
@@ -100,27 +100,14 @@ export default function PopularAvatarsPage() {
           </div>
         </div>
 
-        {/* 搜索和筛选 */}
-        <Card className="border-0 shadow-xl bg-white/95 backdrop-blur-sm">
-          <CardContent className="p-4 space-y-4">
-            {/* 统计信息 */}
-            <div className="flex items-center justify-between text-sm text-gray-600">
-              <span className="flex items-center gap-1">
-                <Users className="w-4 h-4" />共 {total} 个作品
-              </span>
-              {selectedSport !== "全部" && <span>筛选：{selectedSport}</span>}
-            </div>
-          </CardContent>
-        </Card>
-
         {/* 头像网格 */}
         <div className="grid grid-cols-2 gap-4">
           {avatars.map((avatar) => (
             <Card key={avatar.id} className="border-0 shadow-lg bg-white/95 backdrop-blur-sm overflow-hidden">
               <CardContent className="p-0">
-                <div className="relative aspect-[3/4] bg-gray-100">
+                <div className="relative aspect-[1/1] bg-gray-100">
                   <Image
-                    src={avatar.imageUrl || "/placeholder.svg?height=300&width=225&text=热门头像"}
+                    src={avatar.img_url || "/placeholder.svg?height=225&width=225&text=热门头像"}
                     alt={`${avatar.sportName}海报`}
                     fill
                     className="object-cover"
@@ -130,7 +117,7 @@ export default function PopularAvatarsPage() {
                       <Button
                         size="sm"
                         variant="secondary"
-                        onClick={() => handleView(avatar.imageUrl)}
+                        onClick={() => handleView(avatar.img_url)}
                         className="bg-white/90 hover:bg-white"
                       >
                         <Eye className="w-3 h-3" />
@@ -149,14 +136,13 @@ export default function PopularAvatarsPage() {
                 <div className="p-3">
                   <div className="flex items-center justify-between mb-2">
                     <Badge variant="secondary" className="text-xs">
-                      {avatar.sportName}
+                      {avatar.sport_type}
                     </Badge>
                     <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <span>❤️ {avatar.likes}</span>
-                      <span>📥 {avatar.downloads}</span>
+                      <span>📥 {avatar.download_count}</span>
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500">{new Date(avatar.createdAt).toLocaleDateString("zh-CN")}</p>
+                  <p className="text-xs text-gray-500">{new Date(avatar.created_at).toLocaleDateString("zh-CN")}</p>
                 </div>
               </CardContent>
             </Card>
@@ -186,7 +172,7 @@ export default function PopularAvatarsPage() {
         {/* 无更多数据提示 */}
         {!hasMore && avatars.length > 0 && (
           <div className="text-center text-white/80 text-sm py-4">
-            <p>已显示全部 {total} 个作品</p>
+            <p>已加载全部</p>
           </div>
         )}
 

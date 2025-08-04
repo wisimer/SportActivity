@@ -13,8 +13,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase
       .from("sport_avatar")
       .select("*")
-      .range((pageNum - 1) * pageSize, pageNum * pageSize)
-      .order("download_count", { ascending: false })
+      
     if (error) {
       return NextResponse.json({
         success: false,
@@ -22,6 +21,8 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    console.log(data)
+    
     return NextResponse.json({
       success: true,
       data: data,

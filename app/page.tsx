@@ -712,7 +712,7 @@ export default function SportsActivityPage() {
             </Dialog>
 
             {/* 热门头像入口 */}
-            <Link href="/hot-avatars">
+            <Link href="/hot">
               <Button className="w-full h-16 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white font-bold shadow-xl">
                 <div className="flex flex-col items-center gap-1">
                   <Users className="w-6 h-6" />
