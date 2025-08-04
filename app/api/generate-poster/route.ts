@@ -52,39 +52,41 @@ export async function POST(request: NextRequest) {
       formattedBody
     );
 
-    const response = fetch(requestUrl, {
-      method: 'POST',
-      headers: headers,
-      body: formattedBody
-    });
-    if (response == null) {
-      return NextResponse.json({
-        success: false,
-        message: "网络异常，请稍后再试",
-      })
-    }
+    // const response = fetch(requestUrl, {
+    //   method: 'POST',
+    //   headers: headers,
+    //   body: formattedBody
+    // });
+    // if (response == null) {
+    //   return NextResponse.json({
+    //     success: false,
+    //     message: "网络异常，请稍后再试",
+    //   })
+    // }
 
-    const readableStreamResponse = await response;
-    const data = await readableStreamResponse.json();
-    console.log(" data : " + JSON.stringify(data))
+    // const readableStreamResponse = await response;
+    // const data = await readableStreamResponse.json();
+    // console.log(" data : " + JSON.stringify(data))
 
-    if (data == null || data == undefined || data.code !== 10000) {
-      return NextResponse.json({
-        success: false,
-        message: "图片生成失败，请稍后再试",
-      })
-    }
+    // if (data == null || data == undefined || data.code !== 10000) {
+    //   return NextResponse.json({
+    //     success: false,
+    //     message: "图片生成失败，请稍后再试",
+    //   })
+    // }
 
     // 这里结果只返回了任务id，需要后端自己去查询任务结果。
-    // {"ResponseMetadata":{"Action":"Seed3LSingleIPSubmitTask","Region":"cn-beijing","RequestId":"202508041824546C706D98EEFEF37CE4C7","Service":"cv","Version":"2024-06-06"},"Result":{"code":10000,"data":{"task_id":"10380005695761601172"},"message":"Success","request_id":"202508041824546C706D98EEFEF37CE4C7","status":10000,"time_elapsed":"70.333439ms"}}
+    // {"ResponseMetadata":{"Action":"Seed3LSingleIPSubmitTask","Region":"cn-beijing","RequestId":"202508041824546C706D98EEFEF37CE4C7","Service":"cv","Version":"2024-06-06"},"Result":{"code":10000,"data":{"task_id":"9095027694106930461"},"message":"Success","request_id":"202508041824546C706D98EEFEF37CE4C7","status":10000,"time_elapsed":"70.333439ms"}}
 
+    ""
+    const testData = {"task_id":"9095027694106930461"}
     return NextResponse.json({
       success: true,
-      data: data["data"],
-      message: "海报生成成功",
+      data: testData, //data["data"],
+      message: "生成成功",
     })
   } catch (error) {
-    console.error("生成海报失败:", error)
+    console.error("生成失败:", error)
     return NextResponse.json({ success: false, message: "生成失败，请重试" }, { status: 500 })
   }
 }

@@ -107,7 +107,7 @@ const categories = Array.from(new Set(sportTypes.map((sport) => sport.category))
 // 任务管理工具函数
 const TASKS_STORAGE_KEY = "sports_tasks"
 const RATE_LIMIT_KEY = "last_request_time"
-const RATE_LIMIT_DURATION = 10 * 60 * 1000 // 10分钟
+const RATE_LIMIT_DURATION = 10 * 1000// 10 * 60 * 1000 // 10分钟
 
 const saveTasks = (tasks: Task[]) => {
   localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks))
@@ -205,6 +205,54 @@ export default function SportsActivityPage() {
     }
   }
 
+  const queryTaskStatus = async () => {
+    try {
+      if (tasks == null || tasks.length == 0) {
+        return;
+      }
+
+      const firstTask = tasks[0]
+
+      const response = await fetch("/api/query-task", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          taskId: firstTask.id
+        }),
+      })
+
+
+      if (response.ok) {
+        setProgress(100)
+        const taskData = await response.json()
+        console.log("taskData : " + JSON.stringify(taskData))
+
+        setGeneratedImage(taskData.data.data.image_urls[0])
+
+        // 更新任务状态为完成
+        firstTask.status = "completed"
+        firstTask.imageUrl = taskData.data.data.image_urls[0]
+
+        setTasks([firstTask])
+        saveTasks([firstTask])
+
+      }
+
+
+
+    } catch (error) {
+      // 更新任务状态为失败
+      // const failedTask = { ...newTask, status: "failed" as const, error: "生成失败，请重试" }
+      // const finalTasks = updatedTasks.map((task) => (task.id === newTask.id ? failedTask : task))
+      // setTasks(finalTasks)
+      // saveTasks(finalTasks)
+    }
+
+
+  }
+
   const handleGenerate = async () => {
     if (!selectedImage || !selectedSport) return
 
@@ -218,18 +266,6 @@ export default function SportsActivityPage() {
 
     const selectedSportInfo = sportTypes.find((s) => s.id === selectedSport)
     if (!selectedSportInfo) return
-
-    // 创建新任务
-    const newTask: Task = {
-      id: Date.now().toString(),
-      timestamp: Date.now(),
-      sportType: selectedSport,
-      sportName: selectedSportInfo.name,
-      status: "pending",
-    }
-
-    setTasks(newTask)
-    saveTasks(newTask)
 
     setIsGenerating(true)
     setProgress(0)
@@ -261,46 +297,37 @@ export default function SportsActivityPage() {
       if (generateResponse.ok) {
         const data = await generateResponse.json()
 
+        const taskId = data["data"]["task_id"]
 
-        const response = await fetch("/api/query-task", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            taskId: data["data"]["task_id"]
-          }),
-        })
-
-
-        if (response.ok) {
-          setProgress(100)
-          const taskData = await response.json()
-          console.log("taskData : " + JSON.stringify(taskData))
-
-          setGeneratedImage(taskData.data.data.image_urls[0])
+        // 创建新任务
+        const newTask: Task = {
+          id: taskId,
+          timestamp: Date.now(),
+          sportType: selectedSport,
+          sportName: selectedSportInfo.name,
+          status: "pending",
         }
 
-        // 更新任务状态为完成
-        const completedTask = { ...newTask, status: "completed" as const, imageUrl: data.imageUrl }
-        const finalTasks = updatedTasks.map((task) => (task.id === newTask.id ? completedTask : task))
-        setTasks(finalTasks)
-        saveTasks(finalTasks)
+        console.log(tasks)
+
+
+        const updatedTasks = [newTask, ...tasks]
+
+        console.log(updatedTasks, newTask)
+
+        setTasks(updatedTasks)
+        saveTasks(updatedTasks)
 
         // 设置限流时间（只有成功时才设置）
         setLastRequestTime()
         setRateLimit(checkRateLimit())
+
       } else {
         throw new Error("生成失败")
       }
     } catch (error) {
       console.error("生成海报失败:", error)
 
-      // 更新任务状态为失败
-      const failedTask = { ...newTask, status: "failed" as const, error: "生成失败，请重试" }
-      const finalTasks = updatedTasks.map((task) => (task.id === newTask.id ? failedTask : task))
-      setTasks(finalTasks)
-      saveTasks(finalTasks)
 
       alert("生成失败，请重试")
     } finally {
@@ -494,8 +521,8 @@ export default function SportsActivityPage() {
                     key={sport.id}
                     onClick={() => setSelectedSport(sport.id)}
                     className={`p-3 rounded-lg border-2 text-left transition-all duration-200 ${isSelected
-                        ? "border-blue-500 bg-blue-50 shadow-md transform scale-[1.02]"
-                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                      ? "border-blue-500 bg-blue-50 shadow-md transform scale-[1.02]"
+                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                       }`}
                   >
                     <div className="flex items-center gap-2">
@@ -561,13 +588,6 @@ export default function SportsActivityPage() {
                     <Download className="w-5 h-5 mr-2" />
                     下载海报
                   </Button>
-                  <Button
-                    onClick={resetAll}
-                    variant="outline"
-                    className="h-12 px-6 border-2 hover:bg-gray-50 bg-transparent"
-                  >
-                    重新制作
-                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -603,10 +623,15 @@ export default function SportsActivityPage() {
         )}
 
         {/* 任务列表和热门头像入口 */}
-        {!shouldShowGenerateButton && !generatedImage && (
+        {(
           <div className="grid grid-cols-2 gap-4">
             {/* 我的任务入口 */}
-            <Dialog open={showTasks} onOpenChange={setShowTasks}>
+            <Dialog open={showTasks} onOpenChange={(open) => {
+              setShowTasks(open)
+              if (open) {
+                queryTaskStatus()
+              }
+            }}>
               <DialogTrigger asChild>
                 <Button className="h-16 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold shadow-xl">
                   <div className="flex flex-col items-center gap-1">
@@ -621,7 +646,7 @@ export default function SportsActivityPage() {
                     <List className="w-5 h-5" />
                     我的任务
                   </DialogTitle>
-                  <DialogDescription>查看你的最新海报生成任务</DialogDescription>
+                  <DialogDescription>查看你的最新头像生成任务</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   {/* 限流倒计时 */}
@@ -675,16 +700,7 @@ export default function SportsActivityPage() {
                           </div>
                         </div>
                         <p className="text-xs text-gray-500 mb-3">{formatTime(latestTask.timestamp)}</p>
-                        {latestTask.status === "completed" && latestTask.imageUrl && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleViewImage(latestTask.imageUrl!)}
-                            className="w-full h-8 text-xs bg-blue-500 hover:bg-blue-600"
-                          >
-                            <Eye className="w-3 h-3 mr-1" />
-                            查看图片
-                          </Button>
-                        )}
+
                         {latestTask.status === "failed" && latestTask.error && (
                           <p className="text-xs text-red-500">{latestTask.error}</p>
                         )}
@@ -701,7 +717,7 @@ export default function SportsActivityPage() {
             </Dialog>
 
             {/* 热门头像入口 */}
-            <Link href="/popular-avatars">
+            <Link href="/hot-avatars">
               <Button className="w-full h-16 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white font-bold shadow-xl">
                 <div className="flex flex-col items-center gap-1">
                   <Users className="w-6 h-6" />

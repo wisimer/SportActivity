@@ -27,49 +27,9 @@ interface ApiResponse {
   hasMore: boolean
 }
 
-const SPORT_TYPES = [
-  "全部",
-  "航空运动",
-  "美式橄榄球",
-  "射箭",
-  "棒垒球",
-  "台球",
-  "啦啦操",
-  "飞盘",
-  "体操",
-  "体育舞蹈",
-  "空手道",
-  "自由搏击",
-  "摩托艇",
-  "桑博",
-  "攀岩",
-  "壁球",
-  "铁人三项",
-  "拔河",
-  "潜水",
-  "手球",
-  "轮滑",
-  "短柄墙球",
-  "软式曲棍球",
-  "定向",
-  "力量举",
-  "泰拳",
-  "柔术",
-  "救生",
-  "浮士德球",
-  "武术",
-  "滑水",
-  "荷球",
-  "地掷球",
-  "棍网球",
-  "皮划艇",
-]
-
 export default function PopularAvatarsPage() {
   const [avatars, setAvatars] = useState<PopularAvatar[]>([])
   const [loading, setLoading] = useState(false)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedSport, setSelectedSport] = useState("全部")
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [total, setTotal] = useState(0)
@@ -78,13 +38,11 @@ export default function PopularAvatarsPage() {
     setLoading(true)
     try {
       const params = new URLSearchParams({
-        page: pageNum.toString(),
-        pageSize: "12",
-        search: searchTerm,
-        sportType: selectedSport === "全部" ? "" : selectedSport,
+        pageNum: pageNum.toString(),
+        pageSize: "12"
       })
 
-      const response = await fetch(`/api/popular-avatars?${params}`)
+      const response = await fetch(`/api/hot-avatars?${params}`)
       const data: ApiResponse = await response.json()
 
       if (reset) {
@@ -145,31 +103,6 @@ export default function PopularAvatarsPage() {
         {/* 搜索和筛选 */}
         <Card className="border-0 shadow-xl bg-white/95 backdrop-blur-sm">
           <CardContent className="p-4 space-y-4">
-            {/* 搜索框 */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="搜索运动类型..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-
-            {/* 运动类型筛选 */}
-            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-              {SPORT_TYPES.map((sport) => (
-                <Badge
-                  key={sport}
-                  variant={selectedSport === sport ? "default" : "secondary"}
-                  className="cursor-pointer text-xs"
-                  onClick={() => setSelectedSport(sport)}
-                >
-                  {sport}
-                </Badge>
-              ))}
-            </div>
-
             {/* 统计信息 */}
             <div className="flex items-center justify-between text-sm text-gray-600">
               <span className="flex items-center gap-1">
@@ -262,7 +195,7 @@ export default function PopularAvatarsPage() {
           <div className="text-center py-12">
             <Users className="w-16 h-16 mx-auto mb-4 text-white/50" />
             <p className="text-white/80 text-lg mb-2">暂无热门头像</p>
-            <p className="text-white/60 text-sm">快去生成你的专属海报吧！</p>
+            <p className="text-white/60 text-sm">快去生成你的专属头像吧！</p>
           </div>
         )}
       </div>
