@@ -32,8 +32,10 @@ import {
   CheckCircle,
   AlertCircle,
   Eye,
+  Users,
 } from "lucide-react"
 import Image from "next/image"
+import Link from "next/link"
 
 // 任务接口定义
 interface Task {
@@ -103,20 +105,20 @@ const sportTypes = [
 const categories = Array.from(new Set(sportTypes.map((sport) => sport.category)))
 
 // 任务管理工具函数
-const TASKS_STORAGE_KEY = "sports_task"
+const TASKS_STORAGE_KEY = "sports_tasks"
 const RATE_LIMIT_KEY = "last_request_time"
 const RATE_LIMIT_DURATION = 10 * 60 * 1000 // 10分钟
 
-const saveTasks = (tasks: Task) => {
+const saveTasks = (tasks: Task[]) => {
   localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks))
 }
 
-const loadTasks = (): Task => {
+const loadTasks = (): Task[] => {
   try {
     const stored = localStorage.getItem(TASKS_STORAGE_KEY)
-    return stored ? JSON.parse(stored) : {}
+    return stored ? JSON.parse(stored) : []
   } catch {
-    return {}
+    return []
   }
 }
 
@@ -148,7 +150,7 @@ export default function SportsActivityPage() {
   const [progress, setProgress] = useState(0)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string>("全部")
-  const [tasks, setTasks] = useState<Task|null>(null)
+  const [tasks, setTasks] = useState<Task[]>([])
   const [showTasks, setShowTasks] = useState(false)
   const [rateLimit, setRateLimit] = useState({ canRequest: true, remainingTime: 0 })
 
@@ -164,6 +166,17 @@ export default function SportsActivityPage() {
 
     return () => clearInterval(interval)
   }, [])
+
+  // 获取最新任务
+  const latestTask = useMemo(() => {
+    return tasks.length > 0 ? tasks[0] : null
+  }, [tasks])
+
+  // 判断是否应该显示生成按钮
+  const shouldShowGenerateButton = useMemo(() => {
+    if (!latestTask) return true
+    return latestTask.status === "failed"
+  }, [latestTask])
 
   const filteredSports = useMemo(() => {
     let filtered = sportTypes
@@ -355,7 +368,7 @@ export default function SportsActivityPage() {
       <div className="relative z-10 max-w-md mx-auto p-4 space-y-6">
         {/* 头部标题 */}
         <div className="text-center py-6">
-          <div className="flex justify-center items-center gap-4 mb-4">
+          <div className="flex justify-center mb-4">
             <Image
               src="/images/chengdu-logo.png"
               alt="2025成都世运会会徽"
@@ -363,89 +376,6 @@ export default function SportsActivityPage() {
               height={60}
               className="h-12 w-auto"
             />
-            {/* 我的任务按钮 */}
-            <Dialog open={showTasks} onOpenChange={setShowTasks}>
-              <DialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="bg-white/90 hover:bg-white border-white/50 text-gray-700 relative"
-                >
-                  <List className="w-4 h-4 mr-1" />
-                  我的任务
-                  {tasks.filter((t) => t.status === "pending").length > 0 && (
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                  )}
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-sm mx-auto">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <List className="w-5 h-5" />
-                    我的任务
-                  </DialogTitle>
-                  <DialogDescription>查看你的海报生成任务记录</DialogDescription>
-                </DialogHeader>
-                <div className="max-h-96 overflow-y-auto space-y-3">
-                  {tasks.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <List className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                      <p>暂无任务记录</p>
-                    </div>
-                  ) : (
-                    tasks.map((task) => (
-                      <Card key={task.id} className="border border-gray-200">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <div
-                                className={`w-3 h-3 rounded-full ${sportTypes.find((s) => s.id === task.sportType)?.color || "bg-gray-400"
-                                  }`}
-                              ></div>
-                              <span className="font-medium text-sm">{task.sportName}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              {task.status === "pending" && (
-                                <div className="flex items-center gap-1 text-blue-600">
-                                  <Clock className="w-3 h-3 animate-spin" />
-                                  <span className="text-xs">生成中</span>
-                                </div>
-                              )}
-                              {task.status === "completed" && (
-                                <div className="flex items-center gap-1 text-green-600">
-                                  <CheckCircle className="w-3 h-3" />
-                                  <span className="text-xs">已完成</span>
-                                </div>
-                              )}
-                              {task.status === "failed" && (
-                                <div className="flex items-center gap-1 text-red-600">
-                                  <AlertCircle className="w-3 h-3" />
-                                  <span className="text-xs">失败</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <p className="text-xs text-gray-500 mb-3">{formatTime(task.timestamp)}</p>
-                          {task.status === "completed" && task.imageUrl && (
-                            <Button
-                              size="sm"
-                              onClick={() => handleViewImage(task.imageUrl!)}
-                              className="w-full h-8 text-xs bg-blue-500 hover:bg-blue-600"
-                            >
-                              <Eye className="w-3 h-3 mr-1" />
-                              查看图片
-                            </Button>
-                          )}
-                          {task.status === "failed" && task.error && (
-                            <p className="text-xs text-red-500">{task.error}</p>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))
-                  )}
-                </div>
-              </DialogContent>
-            </Dialog>
           </div>
           <h1 className="text-3xl font-bold text-white mb-2 drop-shadow-lg">2025成都世运会</h1>
           <p className="text-white/90 text-sm leading-relaxed">
@@ -454,23 +384,6 @@ export default function SportsActivityPage() {
             AI为你生成专属运动海报
           </p>
         </div>
-
-        {/* 限流提示 */}
-        {!rateLimit.canRequest && (
-          <Card className="border-0 shadow-xl bg-yellow-50 border-yellow-200">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <Clock className="w-5 h-5 text-yellow-600" />
-                <div>
-                  <p className="text-sm font-medium text-yellow-800">请稍等片刻</p>
-                  <p className="text-xs text-yellow-600">
-                    还需等待 {formatRemainingTime(rateLimit.remainingTime)} 后才能发起新请求
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* 图片上传区域 */}
         <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm overflow-hidden">
@@ -581,8 +494,8 @@ export default function SportsActivityPage() {
                     key={sport.id}
                     onClick={() => setSelectedSport(sport.id)}
                     className={`p-3 rounded-lg border-2 text-left transition-all duration-200 ${isSelected
-                      ? "border-blue-500 bg-blue-50 shadow-md transform scale-[1.02]"
-                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                        ? "border-blue-500 bg-blue-50 shadow-md transform scale-[1.02]"
+                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                       }`}
                   >
                     <div className="flex items-center gap-2">
@@ -662,7 +575,7 @@ export default function SportsActivityPage() {
         )}
 
         {/* 生成按钮 */}
-        {!generatedImage && (
+        {shouldShowGenerateButton && !generatedImage && (
           <Button
             onClick={handleGenerate}
             disabled={!selectedImage || !selectedSport || isGenerating || !rateLimit.canRequest}
@@ -687,6 +600,116 @@ export default function SportsActivityPage() {
               </>
             )}
           </Button>
+        )}
+
+        {/* 任务列表和热门头像入口 */}
+        {!shouldShowGenerateButton && !generatedImage && (
+          <div className="grid grid-cols-2 gap-4">
+            {/* 我的任务入口 */}
+            <Dialog open={showTasks} onOpenChange={setShowTasks}>
+              <DialogTrigger asChild>
+                <Button className="h-16 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold shadow-xl">
+                  <div className="flex flex-col items-center gap-1">
+                    <List className="w-6 h-6" />
+                    <span className="text-sm">我的任务</span>
+                  </div>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-sm mx-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <List className="w-5 h-5" />
+                    我的任务
+                  </DialogTitle>
+                  <DialogDescription>查看你的最新海报生成任务</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  {/* 限流倒计时 */}
+                  {!rateLimit.canRequest && (
+                    <Card className="border border-yellow-200 bg-yellow-50">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <Clock className="w-5 h-5 text-yellow-600" />
+                          <div>
+                            <p className="text-sm font-medium text-yellow-800">请稍等片刻</p>
+                            <p className="text-xs text-yellow-600">
+                              还需等待 {formatRemainingTime(rateLimit.remainingTime)} 后才能发起新请求
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* 最新任务 */}
+                  {latestTask ? (
+                    <Card className="border border-gray-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`w-3 h-3 rounded-full ${sportTypes.find((s) => s.id === latestTask.sportType)?.color || "bg-gray-400"
+                                }`}
+                            ></div>
+                            <span className="font-medium text-sm">{latestTask.sportName}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {latestTask.status === "pending" && (
+                              <div className="flex items-center gap-1 text-blue-600">
+                                <Clock className="w-3 h-3 animate-spin" />
+                                <span className="text-xs">生成中</span>
+                              </div>
+                            )}
+                            {latestTask.status === "completed" && (
+                              <div className="flex items-center gap-1 text-green-600">
+                                <CheckCircle className="w-3 h-3" />
+                                <span className="text-xs">已完成</span>
+                              </div>
+                            )}
+                            {latestTask.status === "failed" && (
+                              <div className="flex items-center gap-1 text-red-600">
+                                <AlertCircle className="w-3 h-3" />
+                                <span className="text-xs">失败</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-500 mb-3">{formatTime(latestTask.timestamp)}</p>
+                        {latestTask.status === "completed" && latestTask.imageUrl && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleViewImage(latestTask.imageUrl!)}
+                            className="w-full h-8 text-xs bg-blue-500 hover:bg-blue-600"
+                          >
+                            <Eye className="w-3 h-3 mr-1" />
+                            查看图片
+                          </Button>
+                        )}
+                        {latestTask.status === "failed" && latestTask.error && (
+                          <p className="text-xs text-red-500">{latestTask.error}</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <List className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>暂无任务记录</p>
+                    </div>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* 热门头像入口 */}
+            <Link href="/popular-avatars">
+              <Button className="w-full h-16 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white font-bold shadow-xl">
+                <div className="flex flex-col items-center gap-1">
+                  <Users className="w-6 h-6" />
+                  <span className="text-sm">热门头像</span>
+                </div>
+              </Button>
+            </Link>
+          </div>
         )}
 
         {/* 底部说明 */}
