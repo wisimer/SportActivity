@@ -138,9 +138,6 @@ export default function PopularAvatarsPage() {
                     <Badge variant="secondary" className="text-xs">
                       {avatar.sport_type}
                     </Badge>
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <span>📥 {avatar.download_count}</span>
-                    </div>
                   </div>
                   <p className="text-xs text-gray-500">{new Date(avatar.created_at).toLocaleDateString("zh-CN")}</p>
                 </div>

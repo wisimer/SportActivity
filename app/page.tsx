@@ -336,7 +336,7 @@ export default function SportsActivityPage() {
 
       </div>
       {/* 音乐播放器 */}
-      <MusicPlayer />
+      {/* <MusicPlayer /> */}
 
       {/* 动态背景装饰 */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
