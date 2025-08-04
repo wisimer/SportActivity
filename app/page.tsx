@@ -38,6 +38,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { Background3D } from "@/components/Background3D"
 import { MusicPlayer } from "@/components/MusicPlayer"
+import { sportTypes } from "@/lib/constants"
 
 // 任务接口定义
 interface Task {
@@ -50,59 +51,6 @@ interface Task {
   error?: string
 }
 
-const sportTypes = [
-  // 空中运动
-  { id: "aviation", name: "航空运动", category: "空中运动", color: "bg-sky-500" },
-
-  // 球类运动
-  { id: "football", name: "美式橄榄球", category: "球类运动", color: "bg-green-500" },
-  { id: "baseball", name: "棒垒球", category: "球类运动", color: "bg-blue-500" },
-  { id: "billiards", name: "台球", category: "球类运动", color: "bg-purple-500" },
-  { id: "frisbee", name: "飞盘", category: "球类运动", color: "bg-orange-500" },
-  { id: "handball", name: "手球", category: "球类运动", color: "bg-red-500" },
-  { id: "squash", name: "壁球", category: "球类运动", color: "bg-indigo-500" },
-  { id: "racquetball", name: "短柄墙球", category: "球类运动", color: "bg-pink-500" },
-  { id: "floorball", name: "软式曲棍球", category: "球类运动", color: "bg-teal-500" },
-  { id: "faustball", name: "浮士德球", category: "球类运动", color: "bg-cyan-500" },
-  { id: "korfball", name: "荷球", category: "球类运动", color: "bg-lime-500" },
-  { id: "boules", name: "地掷球", category: "球类运动", color: "bg-amber-500" },
-  { id: "lacrosse", name: "棍网球", category: "球类运动", color: "bg-emerald-500" },
-
-  // 射击运动
-  { id: "archery", name: "射箭", category: "射击运动", color: "bg-red-600" },
-
-  // 体操舞蹈
-  { id: "cheerleading", name: "啦啦操", category: "体操舞蹈", color: "bg-pink-400" },
-  { id: "gymnastics", name: "体操", category: "体操舞蹈", color: "bg-purple-400" },
-  { id: "dancesport", name: "体育舞蹈", category: "体操舞蹈", color: "bg-rose-400" },
-
-  // 格斗运动
-  { id: "karate", name: "空手道", category: "格斗运动", color: "bg-gray-600" },
-  { id: "kickboxing", name: "自由搏击", category: "格斗运动", color: "bg-red-700" },
-  { id: "sambo", name: "桑博", category: "格斗运动", color: "bg-orange-600" },
-  { id: "muaythai", name: "泰拳", category: "格斗运动", color: "bg-yellow-600" },
-  { id: "jiujitsu", name: "柔术", category: "格斗运动", color: "bg-indigo-600" },
-  { id: "wushu", name: "武术", category: "格斗运动", color: "bg-red-800" },
-
-  // 水上运动
-  { id: "motorboat", name: "摩托艇", category: "水上运动", color: "bg-blue-600" },
-  { id: "diving", name: "潜水", category: "水上运动", color: "bg-blue-700" },
-  { id: "lifesaving", name: "救生", category: "水上运动", color: "bg-cyan-600" },
-  { id: "waterski", name: "滑水", category: "水上运动", color: "bg-blue-400" },
-  { id: "canoe", name: "皮划艇", category: "水上运动", color: "bg-teal-600" },
-
-  // 极限运动
-  { id: "climbing", name: "攀岩", category: "极限运动", color: "bg-stone-600" },
-  { id: "triathlon", name: "铁人三项", category: "极限运动", color: "bg-slate-600" },
-  { id: "rollerskating", name: "轮滑", category: "极限运动", color: "bg-violet-500" },
-
-  // 力量运动
-  { id: "tugofwar", name: "拔河", category: "力量运动", color: "bg-amber-600" },
-  { id: "powerlifting", name: "力量举", category: "力量运动", color: "bg-gray-700" },
-
-  // 定向运动
-  { id: "orienteering", name: "定向", category: "定向运动", color: "bg-green-600" },
-]
 
 const categories = Array.from(new Set(sportTypes.map((sport) => sport.category)))
 
@@ -151,7 +99,7 @@ export default function SportsActivityPage() {
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
   const [progress, setProgress] = useState(0)
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState<string>("全部")
+  const [selectedCategory, setSelectedCategory] = useState<string>("球类运动")
   const [tasks, setTasks] = useState<Task[]>([])
   const [showTasks, setShowTasks] = useState(false)
   const [rateLimit, setRateLimit] = useState({ canRequest: true, remainingTime: 0 })
@@ -370,7 +318,7 @@ export default function SportsActivityPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#B4452B] via-[#D36B4F] to-[#F19B80] relative overflow-hidden">
-     {/* 背景图片和渐变 */}
+      {/* 背景图片和渐变 */}
       <div className="absolute inset-0 z-0">
         {/* 顶部背景图片 */}
         <div className="absolute top-0 left-0 right-0 h-180 overflow-hidden">
@@ -481,26 +429,10 @@ export default function SportsActivityPage() {
             <CardDescription>从35种世运会项目中选择你最喜欢的</CardDescription>
           </CardHeader>
           <CardContent className="pl-6 pr-6 space-y-4">
-            {/* 搜索框 */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="搜索运动项目..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
 
             {/* 分类标签 */}
             <div className="flex flex-wrap gap-2">
-              <Badge
-                variant={selectedCategory === "全部" ? "default" : "secondary"}
-                className="cursor-pointer"
-                onClick={() => setSelectedCategory("全部")}
-              >
-                全部
-              </Badge>
+                
               {categories.map((category) => (
                 <Badge
                   key={category}
@@ -537,16 +469,20 @@ export default function SportsActivityPage() {
                   <button
                     key={sport.id}
                     onClick={() => setSelectedSport(sport.id)}
-                    className={`p-3 rounded-lg border-2 text-left transition-all duration-200 ${isSelected
-                      ? "border-blue-500 bg-blue-50 shadow-md transform scale-[1.02]"
-                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                    className={`p-3 rounded-lg border-2 text-left transition-all duration-200 flex items-center gap-3 ${isSelected
+                        ? "border-blue-500 bg-blue-50 shadow-md transform scale-[1.02]"
+                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                       }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <div className={`w-3 h-3 rounded-full ${sport.color}`}></div>
-                      <span className="font-medium text-sm text-gray-800">{sport.name}</span>
+                    <div className="relative w-12 h-12 flex-shrink-0 rounded-full overflow-hidden bg-gray-100">
+                      <Image src={`/sports/${sport.name}.png` || "/placeholder.svg"} alt={sport.name} fill className="object-cover" />
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">{sport.category}</div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm text-gray-800">{sport.name}</span>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">{sport.category}</div>
+                    </div>
                   </button>
                 )
               })}
