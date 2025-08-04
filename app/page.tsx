@@ -6,12 +6,15 @@ import { useState, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -33,6 +36,8 @@ import {
   AlertCircle,
   Eye,
   Users,
+  Share,
+  Share2,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -358,6 +363,29 @@ export default function SportsActivityPage() {
       </div>
 
       <div className="relative z-10 max-w-md mx-auto p-4 space-y-6">
+        {/* 右上角分享按钮 */}
+        <div className="absolute top-0 right-0 p-4">
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-full w-10 h-10 p-0 flex items-center justify-center">
+                <Share2 className="w-5 h-5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="bg-white/95 backdrop-blur-md p-2 max-w-md mx-2">
+              <div className="flex justify-center items-center p-2">
+                <Image
+                  src="/images/header_share.png"
+                  alt="分享图片"
+                  className="rounded-lg shadow-lg max-w-full h-auto"
+                  width={300}
+                  height={300}
+                  priority
+                />
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
         {/* 头部标题 */}
         <div className="text-center py-6">
           <div className="flex justify-center mb-4">
