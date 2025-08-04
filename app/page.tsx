@@ -392,7 +392,7 @@ export default function SportsActivityPage() {
 
       {/* 动态背景装饰 */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-10 left-10 text-yellow-300/30 animate-bounce">
+        <div className="absolute top-10 left-3 text-yellow-300/30 animate-bounce">
           <Trophy className="w-16 h-16" />
         </div>
         <div className="absolute top-32 right-8 text-yellow-300/20 animate-pulse">
