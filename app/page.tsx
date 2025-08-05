@@ -185,19 +185,21 @@ export default function SportsActivityPage() {
         setTaskFailed(firstTask)
         return
       }
+      
+      firstTask.status = imageData.status
 
       if (imageData.image_urls == null || imageData.image_urls == undefined) {
-        setTaskFailed(firstTask)
+        firstTask.imageUrl = undefined
+        setTasks([firstTask])
+        saveTasks([firstTask])
         return
       }
 
       const imageUrl = imageData.image_urls[0]
       setGeneratedImage(imageUrl)
 
-      // 更新任务状态为完成
-      firstTask.status = imageData.status
-      firstTask.imageUrl = imageUrl
 
+      firstTask.imageUrl = imageUrl
       setTasks([firstTask])
       saveTasks([firstTask])
 
