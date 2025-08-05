@@ -156,9 +156,10 @@ export default function SportsActivityPage() {
 
     const firstTask = tasks[0]
     if (firstTask.status === "done") {
+      setGeneratedImage(firstTask.imageUrl)
       return;
     }
-    
+
     try {
 
       const response = await fetch("/api/query-task", {
@@ -633,7 +634,7 @@ export default function SportsActivityPage() {
 
         {/* 任务列表和热门头像入口 */}
         {(
-          <div className="grid grid-cols-2 gap-4">
+          <div className="fixed bottom-4 right-4 z-20">
             {/* 我的任务入口 */}
             <Dialog open={showTasks} onOpenChange={(open) => {
               setShowTasks(open)
@@ -642,10 +643,10 @@ export default function SportsActivityPage() {
               }
             }}>
               <DialogTrigger asChild>
-                <Button className="h-16 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold shadow-xl">
+                <Button className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold shadow-xl flex items-center justify-center">
                   <div className="flex flex-col items-center gap-1">
                     <List className="w-6 h-6" />
-                    <span className="text-sm">我的任务</span>
+                    <span className="text-xs">任务</span>
                   </div>
                 </Button>
               </DialogTrigger>
@@ -725,15 +726,6 @@ export default function SportsActivityPage() {
               </DialogContent>
             </Dialog>
 
-            {/* 热门头像入口 */}
-            <Link href="/hot">
-              <Button className="w-full h-16 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white font-bold shadow-xl">
-                <div className="flex flex-col items-center gap-1">
-                  <Users className="w-6 h-6" />
-                  <span className="text-sm">热门头像</span>
-                </div>
-              </Button>
-            </Link>
           </div>
         )}
 
