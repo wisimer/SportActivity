@@ -1,18 +1,5 @@
 export const sportTypes = [
 
-  // 球类运动
-  { id: "football", name: "美式橄榄球", category: "球类运动", color: "bg-green-500" },
-  { id: "baseball", name: "棒垒球", category: "球类运动", color: "bg-blue-500" },
-  { id: "billiards", name: "台球", category: "球类运动", color: "bg-purple-500" },
-  { id: "frisbee", name: "飞盘", category: "球类运动", color: "bg-orange-500" },
-  { id: "handball", name: "手球", category: "球类运动", color: "bg-red-500" },
-  { id: "squash", name: "壁球", category: "球类运动", color: "bg-indigo-500" },
-  { id: "racquetball", name: "短柄墙球", category: "球类运动", color: "bg-pink-500" },
-  { id: "floorball", name: "软式曲棍球", category: "球类运动", color: "bg-teal-500" },
-  { id: "faustball", name: "浮士德球", category: "球类运动", color: "bg-cyan-500" },
-  { id: "korfball", name: "荷球", category: "球类运动", color: "bg-lime-500" },
-  { id: "boules", name: "地掷球", category: "球类运动", color: "bg-amber-500" },
-  { id: "lacrosse", name: "棍网球", category: "球类运动", color: "bg-emerald-500" },
 
 
   // 格斗运动
@@ -46,7 +33,22 @@ export const sportTypes = [
   { id: "tugofwar", name: "拔河", category: "力量运动", color: "bg-amber-600" },
   { id: "powerlifting", name: "力量举", category: "力量运动", color: "bg-gray-700" },
 
+    // 球类运动
+  { id: "football", name: "美式橄榄球", category: "球类运动", color: "bg-green-500" },
+  { id: "baseball", name: "棒垒球", category: "球类运动", color: "bg-blue-500" },
+  { id: "billiards", name: "台球", category: "球类运动", color: "bg-purple-500" },
+  { id: "handball", name: "手球", category: "球类运动", color: "bg-red-500" },
+  { id: "squash", name: "壁球", category: "球类运动", color: "bg-indigo-500" },
+  { id: "racquetball", name: "短柄墙球", category: "球类运动", color: "bg-pink-500" },
+  { id: "floorball", name: "软式曲棍球", category: "球类运动", color: "bg-teal-500" },
+  { id: "faustball", name: "浮士德球", category: "球类运动", color: "bg-cyan-500" },
+  { id: "korfball", name: "荷球", category: "球类运动", color: "bg-lime-500" },
+  { id: "boules", name: "地掷球", category: "球类运动", color: "bg-amber-500" },
+  { id: "lacrosse", name: "棍网球", category: "球类运动", color: "bg-emerald-500" },
+
+  
   { id: "orienteering", name: "定向", category: "其他", color: "bg-green-600" },
   { id: "archery", name: "射箭", category: "其他", color: "bg-red-600" },
   { id: "aviation", name: "航空运动", category: "其他", color: "bg-sky-500" },
+    { id: "frisbee", name: "飞盘", category: "其他", color: "bg-orange-500" }
 ]

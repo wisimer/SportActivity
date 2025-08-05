@@ -98,7 +98,7 @@ export default function SportsActivityPage() {
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
   const [progress, setProgress] = useState(0)
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState<string>("球类运动")
+  const [selectedCategory, setSelectedCategory] = useState<string>("格斗运动")
   const [tasks, setTasks] = useState<Task[]>([])
   const [showTasks, setShowTasks] = useState(false)
   const [rateLimit, setRateLimit] = useState({ canRequest: true, remainingTime: 0 })
@@ -174,7 +174,7 @@ export default function SportsActivityPage() {
       }
 
       const taskData = await response.json()
-      debugger
+
       if (taskData == null || taskData == undefined || !taskData.success || taskData.data == null || taskData.data == undefined || taskData.data.code != 10000) {
         setTaskFailed(firstTask)
         return
@@ -185,7 +185,7 @@ export default function SportsActivityPage() {
         setTaskFailed(firstTask)
         return
       }
-      
+
       firstTask.status = imageData.status
 
       if (imageData.image_urls == null || imageData.image_urls == undefined) {
@@ -315,7 +315,7 @@ export default function SportsActivityPage() {
     setGeneratedImage(null)
     setProgress(0)
     setSearchTerm("")
-    setSelectedCategory("球类运动")
+    setSelectedCategory("格斗运动")
   }
 
   const handleViewImage = (imageUrl: string) => {
@@ -420,14 +420,14 @@ export default function SportsActivityPage() {
 
         {/* 图片上传区域 */}
         <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm overflow-hidden">
-          <CardHeader className="text-center pb-4">
+          <CardHeader className="text-center">
             <CardTitle className="text-lg flex items-center justify-center gap-2 text-gray-800">
               <Camera className="w-5 h-5" />
               上传自拍照
             </CardTitle>
             <CardDescription>选择一张清晰的正面照片，效果更佳</CardDescription>
           </CardHeader>
-          <CardContent className="p-6">
+          <CardContent className="pl-6 pr-6">
             <div className="relative">
               <input
                 type="file"
@@ -436,10 +436,10 @@ export default function SportsActivityPage() {
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 id="image-upload"
               />
-              <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-400 hover:bg-blue-50/50 transition-all duration-300">
+              <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:border-blue-400 hover:bg-blue-50/50 transition-all duration-300">
                 {selectedImage ? (
                   <div className="space-y-4">
-                    <div className="relative w-32 h-32 mx-auto rounded-full overflow-hidden border-4 border-white shadow-xl">
+                    <div className="relative w-24 h-24 mx-auto rounded-full overflow-hidden border-4 border-white shadow-xl">
                       <Image src={selectedImage || "/placeholder.svg"} alt="上传的照片" fill className="object-cover" />
                     </div>
                     <p className="text-sm text-gray-600 font-medium">✅ 照片已上传</p>
@@ -465,11 +465,14 @@ export default function SportsActivityPage() {
 
         {/* 运动类型选择 */}
         <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm overflow-hidden">
-          <CardHeader>
-            <CardTitle className="text-lg text-gray-800">选择运动类型</CardTitle>
+          <CardHeader className="text-center">
+            <CardTitle className="text-lg flex items-center justify-center gap-2 text-gray-800">
+              <Medal className="w-5 h-5" />
+              选择运动类型
+            </CardTitle>
             <CardDescription>从35种世运会项目中选择你最喜欢的</CardDescription>
           </CardHeader>
-          <CardContent className="pl-6 pr-6 space-y-4">
+          <CardContent className="space-y-4">
 
             {/* 分类标签 */}
             <div className="flex flex-wrap gap-2">
@@ -503,7 +506,7 @@ export default function SportsActivityPage() {
             )}
 
             {/* 运动项目网格 */}
-            <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto">
+            <div className="grid grid-cols-2 gap-3 max-h-128 overflow-y-auto">
               {filteredSports.map((sport) => {
                 const isSelected = selectedSport === sport.id
                 return (
@@ -557,13 +560,13 @@ export default function SportsActivityPage() {
         {/* 生成结果 */}
         {generatedImage && (
           <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm overflow-hidden">
-            <CardHeader className="text-center pb-4">
+            <CardHeader className="text-center">
               <CardTitle className="text-lg flex items-center justify-center gap-2 text-gray-800">
                 <Sparkles className="w-5 h-5" />
                 你的专属世运会头像
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="">
               <div className="space-y-4">
                 <div className="relative rounded-xl overflow-hidden shadow-xl">
                   <Image
