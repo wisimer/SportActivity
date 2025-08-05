@@ -203,14 +203,15 @@ export default function SportsActivityPage() {
       const imageUrl = imageData.image_urls[0]
       setGeneratedImage(imageUrl)
 
-
       firstTask.imageUrl = imageUrl
       setTasks([firstTask])
       saveTasks([firstTask])
+      setIsGenerating(false)
 
     } catch (error) {
       // 更新任务状态为失败
       setTaskFailed(firstTask)
+    } finally {
     }
 
   }
@@ -220,6 +221,7 @@ export default function SportsActivityPage() {
     firstTask.imageUrl = undefined
     setTasks([firstTask])
     saveTasks([firstTask])
+    setIsGenerating(false)
   }
 
   const handleGenerate = async () => {
@@ -229,7 +231,7 @@ export default function SportsActivityPage() {
     const rateLimitCheck = checkRateLimit()
     if (!rateLimitCheck.canRequest) {
       const minutes = Math.ceil(rateLimitCheck.remainingTime / 60000)
-      alert(`活动火爆进行中，请等待 ${minutes} 分钟后再试`)
+      alert(`当前排队人数较多，请等待 ${minutes} 分钟后再试`)
       return
     }
 
@@ -249,7 +251,7 @@ export default function SportsActivityPage() {
           }
           return prev + 5
         })
-      }, 200)
+      }, 500)
 
       const generateResponse = await fetch("/api/generate-poster", {
         method: "POST",
@@ -299,7 +301,6 @@ export default function SportsActivityPage() {
 
       alert("生成失败，请重试")
     } finally {
-      setIsGenerating(false)
     }
   }
 
@@ -619,7 +620,7 @@ export default function SportsActivityPage() {
             ) : !rateLimit.canRequest ? (
               <>
                 <Clock className="w-5 h-5 mr-2" />
-                活动火爆进行中，请等待 {formatRemainingTime(rateLimit.remainingTime)}
+                您的图片正在生成中，请等待 {formatRemainingTime(rateLimit.remainingTime)}
               </>
             ) : !selectedImage || !selectedSport ? (
               "请完成上述步骤"
@@ -668,7 +669,7 @@ export default function SportsActivityPage() {
                           <div>
                             <p className="text-sm font-medium text-yellow-800">请稍等片刻</p>
                             <p className="text-xs text-yellow-600">
-                              活动火爆进行中，请等待 {formatRemainingTime(rateLimit.remainingTime)}
+                              当前排队人数较多，请等待 {formatRemainingTime(rateLimit.remainingTime)}
                             </p>
                           </div>
                         </div>
