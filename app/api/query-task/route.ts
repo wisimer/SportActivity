@@ -19,11 +19,19 @@ export async function POST(request: NextRequest) {
     const bodyParams = {
       req_key: "jimeng_i2i_v30",
       task_id: taskId,
-      req_json: JSON.stringify({
-        "logo_info":
-          { "add_logo": true, "position": 0, "language": 0, "opacity": 0.6, "logo_text_content": "四川观察" },
-        "return_url": true
-      })
+      req_json: JSON.stringify(
+        {
+          "logo_info":
+          {
+            "add_logo": true,
+            "position": 0,
+            "language": 0,
+            "opacity": 0.6,
+            "logo_text_content": "四川观察"
+          },
+          "return_url": true
+        }
+      )
     };
     const formattedBody = JSON.stringify(bodyParams);
 
