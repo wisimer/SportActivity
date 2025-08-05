@@ -5,7 +5,6 @@ import type React from "react"
 import { useState, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 import { Badge } from "@/components/ui/badge"
@@ -14,7 +13,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -34,15 +32,11 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  Eye,
   Users,
-  Share,
   Share2,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { Background3D } from "@/components/Background3D"
-import { MusicPlayer } from "@/components/MusicPlayer"
 import { sportTypes } from "@/lib/constants"
 
 // 任务接口定义

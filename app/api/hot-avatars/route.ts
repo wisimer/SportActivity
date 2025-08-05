@@ -1,10 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { formatQuery, signV4Request } from '@/app/api/jimeng';
 import { supabase } from "@/lib/supabase";
 
-const VOLC_ACCESSKEY = process.env.VOLC_ACCESSKEY
-const VOLC_SECRETKEY = process.env.VOLC_SECRETKEY
-const SERVICE = "cv";
 export async function POST(request: NextRequest) {
   try {
 
@@ -13,7 +9,9 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase
       .from("sport_avatar")
       .select("*")
-      
+      .range((pageNum - 1) * pageSize, pageNum * pageSize - 1)
+      .order("download_count", { ascending: false })
+
     if (error) {
       return NextResponse.json({
         success: false,
