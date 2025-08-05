@@ -519,7 +519,7 @@ export default function SportsActivityPage() {
                   <button
                     key={sport.id}
                     onClick={() => setSelectedSport(sport.id)}
-                    className={`p-3 rounded-lg border-2 text-left transition-all duration-200 flex items-center gap-3 ${isSelected
+                    className={`p-3 ml-1 mr-1 rounded-lg border-2 text-left transition-all duration-200 flex items-center gap-3 ${isSelected
                       ? "border-blue-500 bg-blue-50 shadow-md transform scale-[1.02]"
                       : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                       }`}
