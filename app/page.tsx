@@ -155,6 +155,10 @@ export default function SportsActivityPage() {
     }
 
     const firstTask = tasks[0]
+    if (firstTask.status === "done") {
+      return;
+    }
+    
     try {
 
       const response = await fetch("/api/query-task", {
