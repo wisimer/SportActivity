@@ -22,19 +22,20 @@ export const sportTypes = [
   { id: "triathlon", name: "铁人三项", category: "极限运动", color: "bg-slate-600" },
   { id: "rollerskating", name: "轮滑", category: "极限运动", color: "bg-violet-500" },
 
-  
+
   // 体操舞蹈
   { id: "cheerleading", name: "啦啦操", category: "体操舞蹈", color: "bg-pink-400" },
   { id: "gymnastics", name: "体操", category: "体操舞蹈", color: "bg-purple-400" },
   { id: "dancesport", name: "体育舞蹈", category: "体操舞蹈", color: "bg-rose-400" },
 
-  
+
   // 力量运动
   { id: "tugofwar", name: "拔河", category: "力量运动", color: "bg-amber-600" },
   { id: "powerlifting", name: "力量举", category: "力量运动", color: "bg-gray-700" },
 
-    // 球类运动
+  // 球类运动
   { id: "football", name: "美式橄榄球", category: "球类运动", color: "bg-green-500" },
+  { id: "wheelchair rugby", name: "轮椅橄榄球", category: "球类运动", color: "bg-gray-700" },
   { id: "baseball", name: "棒垒球", category: "球类运动", color: "bg-blue-500" },
   { id: "billiards", name: "台球", category: "球类运动", color: "bg-purple-500" },
   { id: "handball", name: "手球", category: "球类运动", color: "bg-red-500" },
@@ -46,9 +47,9 @@ export const sportTypes = [
   { id: "boules", name: "地掷球", category: "球类运动", color: "bg-amber-500" },
   { id: "lacrosse", name: "棍网球", category: "球类运动", color: "bg-emerald-500" },
 
-  
+
   { id: "orienteering", name: "定向", category: "其他", color: "bg-green-600" },
   { id: "archery", name: "射箭", category: "其他", color: "bg-red-600" },
   { id: "aviation", name: "航空运动", category: "其他", color: "bg-sky-500" },
-    { id: "frisbee", name: "飞盘", category: "其他", color: "bg-orange-500" }
+  { id: "frisbee", name: "飞盘", category: "其他", color: "bg-orange-500" }
 ]
