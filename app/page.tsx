@@ -45,7 +45,7 @@ interface Task {
   timestamp: number
   sportType: string
   sportName: string
-  status: "pending" | "completed" | "failed"
+  status: "in_queue" | "done" | "failed"
   imageUrl?: string
   error?: string
 }
@@ -150,12 +150,12 @@ export default function SportsActivityPage() {
   }
 
   const queryTaskStatus = async () => {
-    try {
-      if (tasks == null || tasks.length == 0) {
-        return;
-      }
+    if (tasks == null || tasks.length == 0) {
+      return;
+    }
 
-      const firstTask = tasks[0]
+    const firstTask = tasks[0]
+    try {
 
       const response = await fetch("/api/query-task", {
         method: "POST",
@@ -166,35 +166,53 @@ export default function SportsActivityPage() {
           taskId: firstTask.id
         }),
       })
+      setProgress(100)
 
-
-      if (response.ok) {
-        setProgress(100)
-        const taskData = await response.json()
-        console.log("taskData : " + JSON.stringify(taskData))
-
-        setGeneratedImage(taskData.data.data.image_urls[0])
-
-        // 更新任务状态为完成
-        firstTask.status = "completed"
-        firstTask.imageUrl = taskData.data.data.image_urls[0]
-
-        setTasks([firstTask])
-        saveTasks([firstTask])
-
+      if (!response.ok) {
+        setTaskFailed(firstTask)
+        return
       }
 
+      const taskData = await response.json()
+      debugger
+      if (taskData == null || taskData == undefined || !taskData.success || taskData.data == null || taskData.data == undefined || taskData.data.code != 10000) {
+        setTaskFailed(firstTask)
+        return
+      }
 
+      const imageData = taskData.data.data
+      if (imageData == null || imageData == undefined) {
+        setTaskFailed(firstTask)
+        return
+      }
+
+      if (imageData.image_urls == null || imageData.image_urls == undefined) {
+        setTaskFailed(firstTask)
+        return
+      }
+
+      const imageUrl = imageData.image_urls[0]
+      setGeneratedImage(imageUrl)
+
+      // 更新任务状态为完成
+      firstTask.status = imageData.status
+      firstTask.imageUrl = imageUrl
+
+      setTasks([firstTask])
+      saveTasks([firstTask])
 
     } catch (error) {
       // 更新任务状态为失败
-      // const failedTask = { ...newTask, status: "failed" as const, error: "生成失败，请重试" }
-      // const finalTasks = updatedTasks.map((task) => (task.id === newTask.id ? failedTask : task))
-      // setTasks(finalTasks)
-      // saveTasks(finalTasks)
+      setTaskFailed(firstTask)
     }
 
+  }
 
+  const setTaskFailed = (firstTask: Task) => {
+    firstTask.status = "failed"
+    firstTask.imageUrl = undefined
+    setTasks([firstTask])
+    saveTasks([firstTask])
   }
 
   const handleGenerate = async () => {
@@ -222,10 +240,9 @@ export default function SportsActivityPage() {
             clearInterval(progressInterval)
             return 90
           }
-          return prev + 10
+          return prev + 5
         })
       }, 200)
-      const sportInfo = sportTypes.find((sport) => sport.id === selectedSport)
 
       const generateResponse = await fetch("/api/generate-poster", {
         method: "POST",
@@ -249,13 +266,13 @@ export default function SportsActivityPage() {
           timestamp: Date.now(),
           sportType: selectedSport,
           sportName: selectedSportInfo.name,
-          status: "pending",
+          status: "in_queue",
         }
 
         console.log(tasks)
 
 
-        const updatedTasks = [newTask, ...tasks]
+        const updatedTasks = [newTask]
 
         console.log(updatedTasks, newTask)
 
@@ -454,7 +471,7 @@ export default function SportsActivityPage() {
 
             {/* 分类标签 */}
             <div className="flex flex-wrap gap-2">
-                
+
               {categories.map((category) => (
                 <Badge
                   key={category}
@@ -492,8 +509,8 @@ export default function SportsActivityPage() {
                     key={sport.id}
                     onClick={() => setSelectedSport(sport.id)}
                     className={`p-3 rounded-lg border-2 text-left transition-all duration-200 flex items-center gap-3 ${isSelected
-                        ? "border-blue-500 bg-blue-50 shadow-md transform scale-[1.02]"
-                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                      ? "border-blue-500 bg-blue-50 shadow-md transform scale-[1.02]"
+                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                       }`}
                   >
                     <div className="relative w-12 h-12 flex-shrink-0 rounded-full overflow-hidden bg-gray-100">
@@ -641,7 +658,7 @@ export default function SportsActivityPage() {
                           <div>
                             <p className="text-sm font-medium text-yellow-800">请稍等片刻</p>
                             <p className="text-xs text-yellow-600">
-                              活动火爆进行中，请等待 {formatRemainingTime(rateLimit.remainingTime)} 
+                              活动火爆进行中，请等待 {formatRemainingTime(rateLimit.remainingTime)}
                             </p>
                           </div>
                         </div>
@@ -662,13 +679,13 @@ export default function SportsActivityPage() {
                             <span className="font-medium text-sm">{latestTask.sportName}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            {latestTask.status === "pending" && (
+                            {latestTask.status === "in_queue" && (
                               <div className="flex items-center gap-1 text-blue-600">
                                 <Clock className="w-3 h-3 animate-spin" />
                                 <span className="text-xs">生成中</span>
                               </div>
                             )}
-                            {latestTask.status === "completed" && (
+                            {latestTask.status === "done" && (
                               <div className="flex items-center gap-1 text-green-600">
                                 <CheckCircle className="w-3 h-3" />
                                 <span className="text-xs">已完成</span>

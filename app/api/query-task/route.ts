@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       task_id: taskId,
       req_json: JSON.stringify({
         "logo_info":
-          { "add_logo": true, "position": 0, "language": 0, "opacity": 0.3, "logo_text_content": "四川观察" },
+          { "add_logo": true, "position": 0, "language": 0, "opacity": 0.6, "logo_text_content": "四川观察" },
         "return_url": true
       })
     };
