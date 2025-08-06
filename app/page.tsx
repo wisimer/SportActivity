@@ -38,36 +38,15 @@ import Image from "next/image"
 import Link from "next/link"
 import { sportTypes } from "@/lib/constants"
 import { useRouter, useSearchParams } from "next/navigation"
-
-// 任务接口定义
-interface Task {
-  id: string
-  timestamp: number
-  status: "in_queue" | "done" | "failed"
-  imageUrl?: string
-  error?: string
-}
+import router from "next/router"
 
 
-const categories = Array.from(new Set(sportTypes.map((sport) => sport.category)))
 
 // 任务管理工具函数
 const TASKS_STORAGE_KEY = "sports_tasks"
 const RATE_LIMIT_KEY = "last_request_time"
-const RATE_LIMIT_DURATION = 20 * 1000// 10 * 60 * 1000 // 10分钟
+const RATE_LIMIT_DURATION = 10 * 1000// 10 * 60 * 1000 // 10分钟
 
-const saveTasks = (tasks: Task[]) => {
-  localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks))
-}
-
-const loadTasks = (): Task[] => {
-  try {
-    const stored = localStorage.getItem(TASKS_STORAGE_KEY)
-    return stored ? JSON.parse(stored) : []
-  } catch {
-    return []
-  }
-}
 
 const checkRateLimit = (): { canRequest: boolean; remainingTime: number } => {
   const lastRequestTime = localStorage.getItem(RATE_LIMIT_KEY)
@@ -94,20 +73,20 @@ export default function SportsActivityPage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
   const [progress, setProgress] = useState(0)
+  const [queryTaskCount, setQueryTaskCount] = useState(0)
+
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string>("格斗运动")
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [showTasks, setShowTasks] = useState(false)
+  const [taskId, setTaskId] = useState<string | null>(null)
+  const [taskStatus, setTaskStatus] = useState("init")
   const [rateLimit, setRateLimit] = useState({ canRequest: true, remainingTime: 0 })
 
   // 获取url路径参数appUserId
   const searchParams = useSearchParams()
   const appUserId = searchParams.get("appUserId")
-  const taskId = searchParams.get("taskId")
 
   // 加载任务和检查限流
   useEffect(() => {
-    setTasks(loadTasks())
     setRateLimit(checkRateLimit())
 
     // 每秒更新限流状态
@@ -117,11 +96,6 @@ export default function SportsActivityPage() {
 
     return () => clearInterval(interval)
   }, [])
-
-  // 获取最新任务
-  const latestTask = useMemo(() => {
-    return tasks.length > 0 ? tasks[0] : null
-  }, [tasks])
 
 
   const filteredSports = useMemo(() => {
@@ -151,89 +125,72 @@ export default function SportsActivityPage() {
     }
   }
 
-  const queryTaskStatus = async () => {
-    if (tasks == null || tasks.length == 0) {
-      return;
-    }
-
-    const firstTask = tasks[0]
-    if (firstTask.status === "done") {
-      setGeneratedImage(firstTask.imageUrl)
+  const queryTaskStatus = async (tmpTaskId:string) => {
+    if (tmpTaskId == null) {
       return;
     }
 
     try {
 
-      const response = await fetch("https://syh.scgchc.com/business/sport/query-task", {
+      const response = await fetch("http://localhost:8080/business/sport/queryImageTask/" + tmpTaskId, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          taskId: firstTask.id
-        }),
+        }
       })
-      setProgress(100)
 
       if (!response.ok) {
-        setTaskFailed(firstTask)
         return
       }
 
       const taskData = await response.json()
 
-      if (taskData == null || taskData == undefined || !taskData.success || taskData.data == null || taskData.data == undefined || taskData.data.code != 10000) {
-        setTaskFailed(firstTask)
+      if (taskData == null || taskData == undefined) {
+        alert("图片生成失败，请稍后重试")
         return
       }
 
-      const imageData = taskData.data.data
-      if (imageData == null || imageData == undefined) {
-        setTaskFailed(firstTask)
+      const taskStatus = taskData.data
+      if (taskStatus === "done") {
+        // 跳转到detail页面
+        router.push(`/detail?taskId=${taskId}`)
         return
       }
 
-      firstTask.status = imageData.status
-
-      if (imageData.image_urls == null || imageData.image_urls == undefined) {
-        firstTask.imageUrl = undefined
-        setTasks([firstTask])
-        saveTasks([firstTask])
+      if (taskStatus === "failed") {
+        setTaskFailed()
         return
       }
-
-      const imageUrl = imageData.image_urls[0]
-      setGeneratedImage(imageUrl)
-
-      firstTask.imageUrl = imageUrl
-      setTasks([firstTask])
-      saveTasks([firstTask])
-      setIsGenerating(false)
 
     } catch (error) {
       // 更新任务状态为失败
-      setTaskFailed(firstTask)
     } finally {
     }
 
   }
 
-  const setTaskFailed = (firstTask: Task) => {
-    firstTask.status = "failed"
-    firstTask.imageUrl = undefined
-    setTasks([firstTask])
-    saveTasks([firstTask])
+  const setTaskFailed = () => {
     setIsGenerating(false)
+    setTaskStatus("fail")
   }
 
   const handleGenerate = async () => {
-    if (!selectedImage) return
 
     // 检查限流
     const rateLimitCheck = checkRateLimit()
     if (!rateLimitCheck.canRequest) {
       const minutes = Math.ceil(rateLimitCheck.remainingTime / 60000)
       alert(`当前排队人数较多，请等待 ${minutes} 分钟后再试`)
+      return
+    }
+
+    if (!appUserId) {
+      alert(`用户未登录四川观察app`)
+      return
+    }
+
+    if (!selectedImage) {
+      alert(`请上传头像`)
       return
     }
 
@@ -248,11 +205,11 @@ export default function SportsActivityPage() {
             clearInterval(progressInterval)
             return 90
           }
-          return prev + 5
+          return prev + 2
         })
-      }, 500)
+      }, 5000)
 
-      const generateResponse = await fetch("https://syh.scgchc.com/business/sport/createImage/" + appUserId, {
+      const generateResponse = await fetch("http://localhost:8080/business/sport/createImage/" + appUserId, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -265,28 +222,27 @@ export default function SportsActivityPage() {
       if (generateResponse.ok) {
         const data = await generateResponse.json()
 
-        const taskId = data["data"]["task_id"]
-
-        // 创建新任务
-        const newTask: Task = {
-          id: taskId,
-          timestamp: Date.now(),
-          status: "in_queue",
-        }
-
-        console.log(tasks)
-
-
-        const updatedTasks = [newTask]
-
-        console.log(updatedTasks, newTask)
-
-        setTasks(updatedTasks)
-        saveTasks(updatedTasks)
+        const tmpTaskId = data["data"]
+        setTaskId(tmpTaskId)
+        setTaskStatus("in_queue")
 
         // 设置限流时间（只有成功时才设置）
         setLastRequestTime()
         setRateLimit(checkRateLimit())
+
+
+        const queryTaskStatusInterval = setInterval(() => {
+          setQueryTaskCount(prev => {
+            const newCount = prev + 1;
+            if (newCount >= 1000) {
+              clearInterval(queryTaskStatusInterval);
+            }
+            return newCount;
+          });
+          queryTaskStatus(tmpTaskId).catch((error) => {
+            console.error('查询任务状态失败:', error);
+          });
+        }, 5000);
 
       } else {
         throw new Error("生成失败")
@@ -450,18 +406,33 @@ export default function SportsActivityPage() {
 
         {/* 生成进度 */}
         {isGenerating && (
-          <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm">
-            <CardContent className="p-6">
-              <div className="text-center space-y-4">
-                <div className="animate-spin mx-auto w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full"></div>
-                <div>
-                  <p className="font-medium text-gray-800 mb-2">AI正在生成你的专属形象...</p>
-                  <Progress value={progress} className="w-full h-2" />
-                  <p className="text-sm text-gray-600 mt-2">{progress}% 完成</p>
+          taskStatus === "fail" ? (
+            <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="text-center space-y-4">
+                  <div className="mx-auto w-12 h-12 text-red-500">
+                    <AlertCircle className="w-full h-full" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-red-500 mb-2">生成失败，请稍后重试</p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="text-center space-y-4">
+                  <div className="animate-spin mx-auto w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+                  <div>
+                    <p className="font-medium text-gray-800 mb-2">AI正在生成你的专属形象...</p>
+                    <Progress value={progress} className="w-full h-2" />
+                    <p className="text-sm text-gray-600 mt-2">{progress}% 完成</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )
         )}
 
         {/* 生成结果 */}
