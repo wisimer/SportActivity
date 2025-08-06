@@ -1,11 +1,10 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import * as React from 'react'
 
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
@@ -38,13 +37,12 @@ import {
 import Image from "next/image"
 import Link from "next/link"
 import { sportTypes } from "@/lib/constants"
+import { useRouter, useSearchParams } from "next/navigation"
 
 // 任务接口定义
 interface Task {
   id: string
   timestamp: number
-  sportType: string
-  sportName: string
   status: "in_queue" | "done" | "failed"
   imageUrl?: string
   error?: string
@@ -92,7 +90,6 @@ const setLastRequestTime = () => {
 
 export default function SportsActivityPage() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
-  const [selectedSport, setSelectedSport] = useState<string>("")
   const [isUploading, setIsUploading] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
@@ -102,6 +99,11 @@ export default function SportsActivityPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [showTasks, setShowTasks] = useState(false)
   const [rateLimit, setRateLimit] = useState({ canRequest: true, remainingTime: 0 })
+
+  // 获取url路径参数appUserId
+  const searchParams = useSearchParams()
+  const appUserId = searchParams.get("appUserId")
+  const taskId = searchParams.get("taskId")
 
   // 加载任务和检查限流
   useEffect(() => {
@@ -162,7 +164,7 @@ export default function SportsActivityPage() {
 
     try {
 
-      const response = await fetch("/api/query-task", {
+      const response = await fetch("https://syh.scgchc.com/business/sport/query-task", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -225,7 +227,7 @@ export default function SportsActivityPage() {
   }
 
   const handleGenerate = async () => {
-    if (!selectedImage || !selectedSport) return
+    if (!selectedImage) return
 
     // 检查限流
     const rateLimitCheck = checkRateLimit()
@@ -234,9 +236,6 @@ export default function SportsActivityPage() {
       alert(`当前排队人数较多，请等待 ${minutes} 分钟后再试`)
       return
     }
-
-    const selectedSportInfo = sportTypes.find((s) => s.id === selectedSport)
-    if (!selectedSportInfo) return
 
     setIsGenerating(true)
     setProgress(0)
@@ -253,14 +252,13 @@ export default function SportsActivityPage() {
         })
       }, 500)
 
-      const generateResponse = await fetch("/api/generate-poster", {
+      const generateResponse = await fetch("https://syh.scgchc.com/business/sport/createImage/" + appUserId, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           image: selectedImage.startsWith('data:') ? selectedImage : btoa(selectedImage),
-          sportType: selectedSportInfo.name,
         }),
       })
 
@@ -273,8 +271,6 @@ export default function SportsActivityPage() {
         const newTask: Task = {
           id: taskId,
           timestamp: Date.now(),
-          sportType: selectedSport,
-          sportName: selectedSportInfo.name,
           status: "in_queue",
         }
 
@@ -305,19 +301,11 @@ export default function SportsActivityPage() {
   }
 
   const handleDownload = () => {
-    if (!generatedImage) return
 
-    const link = document.createElement("a")
-    link.href = generatedImage
-    link.download = `2025成都世运会个性头像_${sportTypes.find((s) => s.id === selectedSport)?.name}_${Date.now()}.png`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
   }
 
   const resetAll = () => {
     setSelectedImage(null)
-    setSelectedSport("")
     setGeneratedImage(null)
     setProgress(0)
     setSearchTerm("")
@@ -338,8 +326,6 @@ export default function SportsActivityPage() {
     return `${minutes}:${seconds.toString().padStart(2, "0")}`
   }
 
-  const selectedSportInfo = sportTypes.find((sport) => sport.id === selectedSport)
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#B4452B] via-[#D36B4F] to-[#F19B80] relative overflow-hidden">
       {/* 背景图片和渐变 */}
@@ -347,7 +333,7 @@ export default function SportsActivityPage() {
         {/* 顶部背景图片 */}
         <div className="absolute top-0 left-0 right-0 h-180 overflow-hidden">
           <Image
-            src="/images/header.jpeg"
+            src="https://scgc-sctv-bucket.oss-cn-shenzhen.aliyuncs.com/shiyunhui/material/header.jpeg"
             alt="3D卡通运动员背景"
             fill
             className="object-cover object-center"
@@ -382,34 +368,12 @@ export default function SportsActivityPage() {
       </div>
 
       <div className="relative z-10 max-w-md mx-auto p-4 space-y-6">
-        {/* 右上角分享按钮 */}
-        <div className="absolute top-0 right-0 p-4">
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-full w-10 h-10 p-0 flex items-center justify-center">
-                <Share2 className="w-5 h-5" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="bg-white/95 backdrop-blur-md p-2 max-w-md mx-2">
-              <div className="flex justify-center items-center p-2">
-                <Image
-                  src="/images/header_share.png"
-                  alt="分享图片"
-                  className="rounded-lg shadow-lg max-w-full h-auto"
-                  width={300}
-                  height={300}
-                  priority
-                />
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
         {/* 头部标题 */}
         <div className="text-center py-6">
           <div className="flex justify-center mb-4">
             <Image
-              src="/images/chengdu-logo.png"
+              src="https://scgc-sctv-bucket.oss-cn-shenzhen.aliyuncs.com/shiyunhui/material/chengdu-logo.png"
               alt="2025成都世运会会徽"
               width={200}
               height={60}
@@ -418,9 +382,9 @@ export default function SportsActivityPage() {
           </div>
           <h1 className="text-3xl font-bold text-white mb-2 drop-shadow-lg">2025成都世运会</h1>
           <p className="text-white/90 text-sm leading-relaxed">
-            上传你的照片，选择运动类型
+            上传你的照片，选择运动类型 {appUserId}
             <br />
-            AI为你生成专属运动头像
+            AI为你生成专属运动形象
           </p>
         </div>
 
@@ -474,76 +438,13 @@ export default function SportsActivityPage() {
           <CardHeader className="text-center">
             <CardTitle className="text-lg flex items-center justify-center gap-2 text-gray-800">
               <Medal className="w-5 h-5" />
-              选择运动类型
+              AI将为你随机生成
             </CardTitle>
-            <CardDescription>从35种世运会项目中选择你最喜欢的</CardDescription>
+            <CardDescription>系统将从35种世运会项目中随机选择4中运动项目</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
 
-            {/* 分类标签 */}
-            <div className="flex flex-wrap gap-2">
 
-              {categories.map((category) => (
-                <Badge
-                  key={category}
-                  variant={selectedCategory === category ? "default" : "secondary"}
-                  className="cursor-pointer"
-                  onClick={() => setSelectedCategory(category)}
-                >
-                  {category}
-                </Badge>
-              ))}
-            </div>
-
-            {/* 已选择的运动 */}
-            {selectedSportInfo && (
-              <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <div className={`w-3 h-3 rounded-full ${selectedSportInfo.color}`}></div>
-                <span className="font-medium text-blue-800">已选择：{selectedSportInfo.name}</span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setSelectedSport("")}
-                  className="ml-auto h-6 w-6 p-0 text-blue-600 hover:text-blue-800"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
-
-            {/* 运动项目网格 */}
-            <div className="grid grid-cols-2 gap-3 max-h-128 overflow-y-auto">
-              {filteredSports.map((sport) => {
-                const isSelected = selectedSport === sport.id
-                return (
-                  <button
-                    key={sport.id}
-                    onClick={() => setSelectedSport(sport.id)}
-                    className={`p-3 ml-1 mr-1 rounded-lg border-2 text-left transition-all duration-200 flex items-center gap-3 ${isSelected
-                      ? "border-blue-500 bg-blue-50 shadow-md transform scale-[1.02]"
-                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                      }`}
-                  >
-                    <div className="relative w-12 h-12 flex-shrink-0 rounded-full overflow-hidden bg-gray-100">
-                      <Image src={`/sports/${sport.name}.png` || "/placeholder.svg"} alt={sport.name} fill className="object-cover" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm text-gray-800">{sport.name}</span>
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">{sport.category}</div>
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-
-            {filteredSports.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <Search className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>未找到匹配的运动项目</p>
-              </div>
-            )}
           </CardContent>
         </Card>
 
@@ -554,7 +455,7 @@ export default function SportsActivityPage() {
               <div className="text-center space-y-4">
                 <div className="animate-spin mx-auto w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full"></div>
                 <div>
-                  <p className="font-medium text-gray-800 mb-2">AI正在生成你的专属头像...</p>
+                  <p className="font-medium text-gray-800 mb-2">AI正在生成你的专属形象...</p>
                   <Progress value={progress} className="w-full h-2" />
                   <p className="text-sm text-gray-600 mt-2">{progress}% 完成</p>
                 </div>
@@ -569,7 +470,7 @@ export default function SportsActivityPage() {
             <CardHeader className="text-center">
               <CardTitle className="text-lg flex items-center justify-center gap-2 text-gray-800">
                 <Sparkles className="w-5 h-5" />
-                你的专属世运会头像
+                你的专属世运会形象
               </CardTitle>
             </CardHeader>
             <CardContent className="">
@@ -577,7 +478,7 @@ export default function SportsActivityPage() {
                 <div className="relative rounded-xl overflow-hidden shadow-xl">
                   <Image
                     src={generatedImage || "/placeholder.svg"}
-                    alt="生成的运动头像"
+                    alt="生成的运动形象"
                     width={400}
                     height={600}
                     className="w-full h-auto"
@@ -585,7 +486,6 @@ export default function SportsActivityPage() {
                 </div>
                 <div className="flex gap-3">
                   <Button
-                    onClick={handleDownload}
                     className="flex-1 h-12 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-lg"
                   >
                     <Download className="w-5 h-5 mr-2" />
@@ -609,7 +509,7 @@ export default function SportsActivityPage() {
         {(
           <Button
             onClick={handleGenerate}
-            disabled={!selectedImage || !selectedSport || isGenerating || !rateLimit.canRequest}
+            disabled={!selectedImage || isGenerating || !rateLimit.canRequest}
             className="w-full h-16 text-lg font-bold bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 hover:from-yellow-500 hover:via-orange-600 hover:to-red-600 text-white shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] transition-all duration-300"
           >
             {isGenerating ? (
@@ -622,119 +522,23 @@ export default function SportsActivityPage() {
                 <Clock className="w-5 h-5 mr-2" />
                 您的图片正在生成中，请等待 {formatRemainingTime(rateLimit.remainingTime)}
               </>
-            ) : !selectedImage || !selectedSport ? (
+            ) : !selectedImage ? (
               "请完成上述步骤"
             ) : (
               <>
                 <Sparkles className="w-5 h-5 mr-2" />
-                生成专属世运会头像
+                生成专属世运会形象
               </>
             )}
           </Button>
         )}
 
-        {/* 任务列表和热门头像入口 */}
-        {(
-          <div className="fixed bottom-4 right-4 z-20">
-            {/* 我的任务入口 */}
-            <Dialog open={showTasks} onOpenChange={(open) => {
-              setShowTasks(open)
-              if (open) {
-                queryTaskStatus()
-              }
-            }}>
-              <DialogTrigger asChild>
-                <Button className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold shadow-xl flex items-center justify-center">
-                  <div className="flex flex-col items-center gap-1">
-                    <List className="w-6 h-6" />
-                    <span className="text-xs">任务</span>
-                  </div>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-sm mx-auto">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <List className="w-5 h-5" />
-                    我的任务
-                  </DialogTitle>
-                  <DialogDescription>查看你的最新头像生成任务</DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  {/* 限流倒计时 */}
-                  {!rateLimit.canRequest && (
-                    <Card className="border border-yellow-200 bg-yellow-50">
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                          <Clock className="w-5 h-5 text-yellow-600" />
-                          <div>
-                            <p className="text-sm font-medium text-yellow-800">请稍等片刻</p>
-                            <p className="text-xs text-yellow-600">
-                              当前排队人数较多，请等待 {formatRemainingTime(rateLimit.remainingTime)}
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* 最新任务 */}
-                  {latestTask ? (
-                    <Card className="border border-gray-200">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <div
-                              className={`w-3 h-3 rounded-full ${sportTypes.find((s) => s.id === latestTask.sportType)?.color || "bg-gray-400"
-                                }`}
-                            ></div>
-                            <span className="font-medium text-sm">{latestTask.sportName}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {latestTask.status === "in_queue" && (
-                              <div className="flex items-center gap-1 text-blue-600">
-                                <Clock className="w-3 h-3 animate-spin" />
-                                <span className="text-xs">生成中</span>
-                              </div>
-                            )}
-                            {latestTask.status === "done" && (
-                              <div className="flex items-center gap-1 text-green-600">
-                                <CheckCircle className="w-3 h-3" />
-                                <span className="text-xs">已完成</span>
-                              </div>
-                            )}
-                            {latestTask.status === "failed" && (
-                              <div className="flex items-center gap-1 text-red-600">
-                                <AlertCircle className="w-3 h-3" />
-                                <span className="text-xs">失败</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <p className="text-xs text-gray-500 mb-3">{formatTime(latestTask.timestamp)}</p>
-
-                        {latestTask.status === "failed" && latestTask.error && (
-                          <p className="text-xs text-red-500">{latestTask.error}</p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      <List className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                      <p>暂无任务记录</p>
-                    </div>
-                  )}
-                </div>
-              </DialogContent>
-            </Dialog>
-
-          </div>
-        )}
 
         {/* 底部说明 */}
         <div className="text-center text-white/80 text-xs space-y-2 pb-6">
           <p className="flex items-center justify-center gap-1">
             <Star className="w-3 h-3" />
-            上传的照片仅用于头像生成，不会保存
+            上传的照片仅用于形象生成，不会保存
           </p>
         </div>
       </div>
