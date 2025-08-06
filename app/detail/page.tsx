@@ -104,7 +104,7 @@ function ImageDetailContent() {
             <CardContent className="">
               {/* 2x2 网格布局 */}
               <div className="grid grid-cols-2 gap-4">
-                {imageList.map((item, index) => (
+                {imageList.length > 0 && imageList.map((item, index) => (
                   <div
                     key={index}
                     className="relative aspect-square bg-gray-100 rounded-2xl overflow-hidden border-4 border-gray-800 shadow-lg"

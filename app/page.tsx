@@ -38,8 +38,9 @@ import Image from "next/image"
 import Link from "next/link"
 import { sportTypes } from "@/lib/constants"
 import { useRouter, useSearchParams } from "next/navigation"
-import router from "next/router"
 
+import Router from "next/router"
+import { error } from "console"
 
 
 // 任务管理工具函数
@@ -85,16 +86,27 @@ export default function SportsActivityPage() {
   const searchParams = useSearchParams()
   const appUserId = searchParams.get("appUserId")
 
+  const processIntervalRef = React.useRef<NodeJS.Timeout>(null);
+  const queryIntervalRef = React.useRef<NodeJS.Timeout>(null);
+  const limitIntervalRef = React.useRef<NodeJS.Timeout>(null);
+
+
   // 加载任务和检查限流
   useEffect(() => {
     setRateLimit(checkRateLimit())
 
     // 每秒更新限流状态
-    const interval = setInterval(() => {
+    limitIntervalRef.current = setInterval(() => {
       setRateLimit(checkRateLimit())
     }, 1000)
 
-    return () => clearInterval(interval)
+    return () => {
+      if (limitIntervalRef.current) {
+        clearInterval(limitIntervalRef.current);
+      }
+
+    }
+
   }, [])
 
 
@@ -125,47 +137,47 @@ export default function SportsActivityPage() {
     }
   }
 
-  const queryTaskStatus = async (tmpTaskId:string) => {
+  const queryTaskStatus = (tmpTaskId: string) => {
     if (tmpTaskId == null) {
       return;
     }
 
-    try {
-
-      const response = await fetch("http://localhost:8080/business/sport/queryImageTask/" + tmpTaskId, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        }
-      })
-
+    fetch("http://localhost:8080/business/sport/queryImageTask/" + tmpTaskId, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      }
+    }).then((response) => {
       if (!response.ok) {
         return
       }
 
-      const taskData = await response.json()
+      response.json().then((taskData) => {
+        if (taskData == null || taskData == undefined) {
+          alert("图片生成失败，请稍后重试")
+          return
+        }
 
-      if (taskData == null || taskData == undefined) {
-        alert("图片生成失败，请稍后重试")
-        return
-      }
+        const taskStatus = taskData.data
+        if (taskStatus === "done") {
+          // 跳转到detail页面
+          console.log("图片生成成功，准备跳转detail页面")
 
-      const taskStatus = taskData.data
-      if (taskStatus === "done") {
-        // 跳转到detail页面
-        router.push(`/detail?taskId=${taskId}`)
-        return
-      }
+          window.location.href = `/shiyunhui/h5/detail?taskId=${tmpTaskId}`
 
-      if (taskStatus === "failed") {
-        setTaskFailed()
-        return
-      }
+          return
+        }
 
-    } catch (error) {
-      // 更新任务状态为失败
-    } finally {
-    }
+        if (taskStatus === "failed") {
+          setTaskFailed()
+          return
+        }
+      })
+
+
+
+
+    })
 
   }
 
@@ -198,12 +210,16 @@ export default function SportsActivityPage() {
     setProgress(0)
     setGeneratedImage(null)
 
+
     try {
-      const progressInterval = setInterval(() => {
+      processIntervalRef.current = setInterval(() => {
+
         setProgress((prev) => {
           if (prev >= 90) {
-            clearInterval(progressInterval)
-            return 90
+            if (processIntervalRef.current) {
+              clearInterval(processIntervalRef.current);
+            }
+            return 90;
           }
           return prev + 2
         })
@@ -231,17 +247,18 @@ export default function SportsActivityPage() {
         setRateLimit(checkRateLimit())
 
 
-        const queryTaskStatusInterval = setInterval(() => {
+        queryIntervalRef.current = setInterval(() => {
           setQueryTaskCount(prev => {
             const newCount = prev + 1;
             if (newCount >= 1000) {
-              clearInterval(queryTaskStatusInterval);
+              if (queryIntervalRef.current) {
+                clearInterval(queryIntervalRef.current);
+              }
+              ;
             }
             return newCount;
           });
-          queryTaskStatus(tmpTaskId).catch((error) => {
-            console.error('查询任务状态失败:', error);
-          });
+          queryTaskStatus(tmpTaskId)
         }, 5000);
 
       } else {
@@ -253,6 +270,9 @@ export default function SportsActivityPage() {
 
       alert("生成失败，请重试")
     } finally {
+      // 清理定时器
+      if (processIntervalRef.current) clearInterval(processIntervalRef.current);
+      if (queryIntervalRef.current) clearInterval(queryIntervalRef.current);
     }
   }
 
