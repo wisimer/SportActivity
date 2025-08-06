@@ -2,51 +2,33 @@
 
 import { useState, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import * as React from 'react'
 
-import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
 import {
   Upload,
   Camera,
-  Search,
   Trophy,
   Medal,
   Star,
   Download,
   Sparkles,
   Flame,
-  X,
-  List,
   Clock,
-  CheckCircle,
   AlertCircle,
-  Users,
-  Share2,
 } from "lucide-react"
 import Image from "next/image"
-import Link from "next/link"
 import { sportTypes } from "@/lib/constants"
 import { useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
 
-import Router from "next/router"
-import { error } from "console"
 
 
 // 任务管理工具函数
 const TASKS_STORAGE_KEY = "sports_tasks"
 const RATE_LIMIT_KEY = "last_request_time"
-const RATE_LIMIT_DURATION = 10 * 1000// 10 * 60 * 1000 // 10分钟
+const RATE_LIMIT_DURATION = 3 * 10 * 1000// 10 * 60 * 1000 // 10分钟
 
 
 const checkRateLimit = (): { canRequest: boolean; remainingTime: number } => {
@@ -72,7 +54,6 @@ export default function SportsActivityPage() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null)
   const [progress, setProgress] = useState(0)
   const [queryTaskCount, setQueryTaskCount] = useState(0)
 
@@ -85,10 +66,18 @@ export default function SportsActivityPage() {
   // 获取url路径参数appUserId
   const searchParams = useSearchParams()
   const appUserId = searchParams.get("appUserId")
+  const token = searchParams.get("token")
+  const deviceId = searchParams.get("deviceId")
 
-  const processIntervalRef = React.useRef<NodeJS.Timeout>(null);
-  const queryIntervalRef = React.useRef<NodeJS.Timeout>(null);
-  const limitIntervalRef = React.useRef<NodeJS.Timeout>(null);
+  // 优先使用deviceId，其次是appUserId，最后是token。分享到微信会带一个appUserId。在app里面则有userId和token，没有appUserId。
+  // 这里有个问题，分享出去的时候带的appUserId是分享者的用户id，如果对方打开链接，生成的图片是分享者的图片，而不是自己的图片。
+  // 所以不能用appUserId。
+  const userId = deviceId || token
+
+
+  let processIntervalRef: NodeJS.Timeout;
+  let queryIntervalRef: NodeJS.Timeout;
+  let limitIntervalRef: NodeJS.Timeout;
 
 
   // 加载任务和检查限流
@@ -96,13 +85,13 @@ export default function SportsActivityPage() {
     setRateLimit(checkRateLimit())
 
     // 每秒更新限流状态
-    limitIntervalRef.current = setInterval(() => {
+    limitIntervalRef = setInterval(() => {
       setRateLimit(checkRateLimit())
     }, 1000)
 
     return () => {
-      if (limitIntervalRef.current) {
-        clearInterval(limitIntervalRef.current);
+      if (limitIntervalRef) {
+        clearInterval(limitIntervalRef);
       }
 
     }
@@ -142,7 +131,7 @@ export default function SportsActivityPage() {
       return;
     }
 
-    fetch("http://localhost:8080/business/sport/queryImageTask/" + tmpTaskId, {
+    fetch("https://syh.scgchc.com/business/sport/queryImageTask/" + tmpTaskId, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -163,7 +152,15 @@ export default function SportsActivityPage() {
           // 跳转到detail页面
           console.log("图片生成成功，准备跳转detail页面")
 
-          window.location.href = `/shiyunhui/h5/detail?taskId=${tmpTaskId}`
+          setTaskStatus("done")
+          setIsGenerating(false)
+          if (queryIntervalRef) {
+            clearInterval(queryIntervalRef);
+          }
+          if (processIntervalRef) {
+            clearInterval(processIntervalRef);
+          }
+
 
           return
         }
@@ -173,9 +170,6 @@ export default function SportsActivityPage() {
           return
         }
       })
-
-
-
 
     })
 
@@ -196,7 +190,7 @@ export default function SportsActivityPage() {
       return
     }
 
-    if (!appUserId) {
+    if (!userId) {
       alert(`用户未登录四川观察app`)
       return
     }
@@ -208,24 +202,22 @@ export default function SportsActivityPage() {
 
     setIsGenerating(true)
     setProgress(0)
-    setGeneratedImage(null)
 
 
     try {
-      processIntervalRef.current = setInterval(() => {
-
+      processIntervalRef = setInterval(() => {
         setProgress((prev) => {
           if (prev >= 90) {
-            if (processIntervalRef.current) {
-              clearInterval(processIntervalRef.current);
+            if (processIntervalRef) {
+              clearInterval(processIntervalRef);
             }
             return 90;
           }
-          return prev + 2
-        })
-      }, 5000)
+          return prev + 2;
+        });
+      }, 1000); // 将间隔时间从 5000ms 改为 1000ms，使进度更新更及时
 
-      const generateResponse = await fetch("http://localhost:8080/business/sport/createImage/" + appUserId, {
+      const generateResponse = await fetch("https://syh.scgchc.com/business/sport/createImage/" + userId, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -247,12 +239,12 @@ export default function SportsActivityPage() {
         setRateLimit(checkRateLimit())
 
 
-        queryIntervalRef.current = setInterval(() => {
+        queryIntervalRef = setInterval(() => {
           setQueryTaskCount(prev => {
             const newCount = prev + 1;
             if (newCount >= 1000) {
-              if (queryIntervalRef.current) {
-                clearInterval(queryIntervalRef.current);
+              if (queryIntervalRef) {
+                clearInterval(queryIntervalRef);
               }
               ;
             }
@@ -270,9 +262,7 @@ export default function SportsActivityPage() {
 
       alert("生成失败，请重试")
     } finally {
-      // 清理定时器
-      if (processIntervalRef.current) clearInterval(processIntervalRef.current);
-      if (queryIntervalRef.current) clearInterval(queryIntervalRef.current);
+
     }
   }
 
@@ -282,7 +272,6 @@ export default function SportsActivityPage() {
 
   const resetAll = () => {
     setSelectedImage(null)
-    setGeneratedImage(null)
     setProgress(0)
     setSearchTerm("")
     setSelectedCategory("格斗运动")
@@ -358,7 +347,7 @@ export default function SportsActivityPage() {
           </div>
           <h1 className="text-3xl font-bold text-white mb-2 drop-shadow-lg">2025成都世运会</h1>
           <p className="text-white/90 text-sm leading-relaxed">
-            上传你的照片，选择运动类型 {appUserId}
+            上传你的照片，选择运动类型
             <br />
             AI为你生成专属运动形象
           </p>
@@ -407,22 +396,14 @@ export default function SportsActivityPage() {
               </div>
             </div>
           </CardContent>
+          <CardFooter>
+            <CardDescription>
+              系统将为你从35种世运会项目中随机选择4中运动项目生成AI形象
+            </CardDescription>
+          </CardFooter>
         </Card>
 
-        {/* 运动类型选择 */}
-        <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm overflow-hidden">
-          <CardHeader className="text-center">
-            <CardTitle className="text-lg flex items-center justify-center gap-2 text-gray-800">
-              <Medal className="w-5 h-5" />
-              AI将为你随机生成
-            </CardTitle>
-            <CardDescription>系统将从35种世运会项目中随机选择4中运动项目</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
 
-
-          </CardContent>
-        </Card>
 
         {/* 生成进度 */}
         {isGenerating && (
@@ -456,7 +437,7 @@ export default function SportsActivityPage() {
         )}
 
         {/* 生成结果 */}
-        {generatedImage && (
+        {taskStatus === "done" && (
           <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm overflow-hidden">
             <CardHeader className="text-center">
               <CardTitle className="text-lg flex items-center justify-center gap-2 text-gray-800">
@@ -465,23 +446,17 @@ export default function SportsActivityPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="">
-              <div className="space-y-4">
-                <div className="relative rounded-xl overflow-hidden shadow-xl">
-                  <Image
-                    src={generatedImage || "/placeholder.svg"}
-                    alt="生成的运动形象"
-                    width={400}
-                    height={600}
-                    className="w-full h-auto"
-                  />
-                </div>
+              <div className="space-y-4 flex flex-col items-center">
+
                 <div className="flex gap-3">
-                  <Button
-                    className="flex-1 h-12 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-lg"
-                  >
-                    <Download className="w-5 h-5 mr-2" />
-                    下载头像
-                  </Button>
+                  <Link href={`/detail?taskId=${taskId}`}>
+                    <Button
+                      className="flex-1 h-12 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-lg"
+                    >
+                      <Download className="w-5 h-5 mr-2" />
+                      查看形象
+                    </Button>
+                  </Link>
 
                   <Button
                     onClick={resetAll}
@@ -511,10 +486,10 @@ export default function SportsActivityPage() {
             ) : !rateLimit.canRequest ? (
               <>
                 <Clock className="w-5 h-5 mr-2" />
-                您的图片正在生成中，请等待 {formatRemainingTime(rateLimit.remainingTime)}
+                当前排队人数较多，请等待 {formatRemainingTime(rateLimit.remainingTime)}
               </>
             ) : !selectedImage ? (
-              "请完成上述步骤"
+              "请上传合适的自拍照"
             ) : (
               <>
                 <Sparkles className="w-5 h-5 mr-2" />

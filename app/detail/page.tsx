@@ -27,7 +27,7 @@ function ImageDetailContent() {
 
     try {
 
-      const response = await fetch("http://localhost:8080/business/sport/queryUserFinalImage/" + taskId, {
+      const response = await fetch("https://syh.scgchc.com/business/sport/queryUserFinalImage/" + taskId, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
