@@ -17,12 +17,17 @@ function ImageDetailContent() {
 
   const [selectedImage, setSelectedImage] = useState<string>("https://scgc-sctv-bucket.oss-cn-shenzhen.aliyuncs.com/shiyunhui/material/default_detail.png")
 
+  const [imageList, setImageList] = useState<string[]>([])
 
-  const queryTaskStatus = async () => {
+  useEffect(() => {
+    queryTaskDetail()
+  }, [])
+
+  const queryTaskDetail = async () => {
 
     try {
 
-      const response = await fetch("https://syh.scgchc.com/business/sport/queryUserFinalImage/" + taskId, {
+      const response = await fetch("http://localhost:8080/business/sport/queryUserFinalImage/" + taskId, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -34,8 +39,12 @@ function ImageDetailContent() {
       }
 
       const taskData = await response.json()
+      if (taskData.data == null || taskData.data.status !== "done") {
+        return
+      }
 
-      setSelectedImage(taskData.data)
+      setImageList(taskData.data.imgDataList)
+      console.log(taskData.data.imgDataList)
 
     } catch (error) {
       // 更新任务状态为失败
@@ -90,20 +99,25 @@ function ImageDetailContent() {
 
 
         {/* 主要内容卡片 */}
-        <div className="p-6 mt-48">
-          {selectedImage ? (
-            <div className="relative aspect-[4/3] bg-gray-100 rounded-2xl overflow-hidden border-4 border-gray-800 shadow-lg mb-6">
-              <Image src={selectedImage} alt="AI专属运动形象" fill className="object-cover" />
-            </div>
-          ) : (
-            <div className="relative aspect-[4/3] bg-gray-100 rounded-2xl overflow-hidden border-4 border-gray-800 shadow-lg mb-6">
-              <Image src="/placeholder.svg" alt="占位图" fill className="object-cover" />
-            </div>
-          )}
+        <div className="mt-48">
+          <Card className="border-0 shadow-2xl bg-white/50 backdrop-blur-sm overflow-hidden rounded-3xl">
+            <CardContent className="">
+              {/* 2x2 网格布局 */}
+              <div className="grid grid-cols-2 gap-4">
+                {imageList.map((item, index) => (
+                  <div
+                    key={index}
+                    className="relative aspect-square bg-gray-100 rounded-2xl overflow-hidden border-4 border-gray-800 shadow-lg"
+                  >
+                    <Image src={item.startsWith('data:image') ? item : (item ? `data:image/png;base64,${item}` : "/placeholder.svg")} alt={index} fill className="object-cover" />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* 操作按钮 */}
-          <div className="space-y-3 flex justify-center">
-
+          <div className="space-y-3 flex justify-center mt-4">
             <Link href="/">
               <Button
                 variant="ghost"
