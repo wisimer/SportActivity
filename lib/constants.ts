@@ -1,3 +1,12 @@
+// API端点配置
+export const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://syh.scgchc.com' 
+  : 'http://localhost:8081';
+
+export const QUERY_IMAGE_TASK_ENDPOINT = `${API_BASE_URL}/business/sport/queryImageTask/`;
+export const CREATE_IMAGE_ENDPOINT = `${API_BASE_URL}/business/sport/createImage/`;
+export const QUERY_USER_FINAL_IMAGE_ENDPOINT = `${API_BASE_URL}/business/sport/queryUserFinalImage/`;
+
 export const sportTypes = [
 
 

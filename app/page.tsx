@@ -17,9 +17,12 @@ import {
   Flame,
   Clock,
   AlertCircle,
+  PencilRuler,
+  CircleArrowOutUpLeftIcon,
+  CircleArrowOutUpRight,
 } from "lucide-react"
 import Image from "next/image"
-import { sportTypes } from "@/lib/constants"
+import { sportTypes, QUERY_IMAGE_TASK_ENDPOINT, CREATE_IMAGE_ENDPOINT } from "@/lib/constants"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 
@@ -131,7 +134,7 @@ export default function SportsActivityPage() {
       return;
     }
 
-    fetch("http://localhost:8081/business/sport/queryImageTask/" + tmpTaskId, {
+    fetch(QUERY_IMAGE_TASK_ENDPOINT + tmpTaskId, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -176,6 +179,7 @@ export default function SportsActivityPage() {
   }
 
   const setTaskFailed = () => {
+    setTaskId(null)
     setIsGenerating(false)
     setTaskStatus("fail")
   }
@@ -217,13 +221,14 @@ export default function SportsActivityPage() {
         });
       }, 1000); // 将间隔时间从 5000ms 改为 1000ms，使进度更新更及时
 
-      const generateResponse = await fetch("http://localhost:8081/business/sport/createImage/" + userId, {
+      const generateResponse = await fetch(CREATE_IMAGE_ENDPOINT + userId, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           image: selectedImage.startsWith('data:') ? selectedImage : btoa(selectedImage),
+          imageType: selectedImage?.split(';')[0].split('/')[1] || 'jpeg'
         }),
       })
 
@@ -254,7 +259,10 @@ export default function SportsActivityPage() {
         }, 5000);
 
       } else {
-        throw new Error("生成失败")
+        setSelectedImage(null)
+        setProgress(0)
+        setSearchTerm("")
+        setTaskFailed()
       }
     } catch (error) {
       console.error("生成失败:", error)
@@ -363,8 +371,9 @@ export default function SportsActivityPage() {
             <CardDescription>选择一张清晰的正面照片，效果更佳</CardDescription>
           </CardHeader>
           <CardContent className="pl-6 pr-6">
-            <div className="relative">
+            <div className="relative" >
               <input
+                disabled={isGenerating}
                 type="file"
                 accept="image/*"
                 onChange={handleImageUpload}
@@ -453,7 +462,7 @@ export default function SportsActivityPage() {
                     <Button
                       className="flex-1 h-12 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-lg"
                     >
-                      <Download className="w-5 h-5 mr-2" />
+                      <CircleArrowOutUpRight className="w-5 h-5 mr-2" />
                       查看形象
                     </Button>
                   </Link>
@@ -463,6 +472,8 @@ export default function SportsActivityPage() {
                     variant="outline"
                     className="h-12 px-6 border-2 hover:bg-gray-50 bg-transparent"
                   >
+                    <PencilRuler className="w-5 h-5 mr-2" />
+
                     重新制作
                   </Button>
                 </div>

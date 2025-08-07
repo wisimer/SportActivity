@@ -7,6 +7,7 @@ import { ArrowLeft, Download, Share2, QrCode, Sparkles } from 'lucide-react'
 import Image from "next/image"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
+import { QUERY_USER_FINAL_IMAGE_ENDPOINT } from "@/lib/constants"
 import * as React from 'react'
 
 interface ImageItem {
@@ -32,7 +33,7 @@ function ImageDetailContent() {
 
     try {
 
-      const response = await fetch("http://localhost:8081/business/sport/queryUserFinalImage/" + taskId, {
+      const response = await fetch(QUERY_USER_FINAL_IMAGE_ENDPOINT + taskId, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
