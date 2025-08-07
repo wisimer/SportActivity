@@ -131,7 +131,7 @@ export default function SportsActivityPage() {
       return;
     }
 
-    fetch("https://syh.scgchc.com/business/sport/queryImageTask/" + tmpTaskId, {
+    fetch("http://localhost:8081/business/sport/queryImageTask/" + tmpTaskId, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -217,7 +217,7 @@ export default function SportsActivityPage() {
         });
       }, 1000); // 将间隔时间从 5000ms 改为 1000ms，使进度更新更及时
 
-      const generateResponse = await fetch("https://syh.scgchc.com/business/sport/createImage/" + userId, {
+      const generateResponse = await fetch("http://localhost:8081/business/sport/createImage/" + userId, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -4,7 +4,7 @@ import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: '世运活力头像',
+  title: '世运活力形象',
   description: '四川观察',
   generator: '观察智媒',
 }

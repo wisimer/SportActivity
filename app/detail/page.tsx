@@ -9,6 +9,11 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import * as React from 'react'
 
+interface ImageItem {
+  imageUrl: string
+  sportType: string
+}
+
 function ImageDetailContent() {
   const searchParams = useSearchParams()
   const appUserId = searchParams.get("appUserId")
@@ -17,7 +22,7 @@ function ImageDetailContent() {
 
   const [selectedImage, setSelectedImage] = useState<string>("https://scgc-sctv-bucket.oss-cn-shenzhen.aliyuncs.com/shiyunhui/material/default_detail.png")
 
-  const [imageList, setImageList] = useState<string[]>([])
+  const [imageList, setImageList] = useState<ImageItem[]>([])
 
   useEffect(() => {
     queryTaskDetail()
@@ -27,7 +32,7 @@ function ImageDetailContent() {
 
     try {
 
-      const response = await fetch("https://syh.scgchc.com/business/sport/queryUserFinalImage/" + taskId, {
+      const response = await fetch("http://localhost:8081/business/sport/queryUserFinalImage/" + taskId, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -99,17 +104,21 @@ function ImageDetailContent() {
 
 
         {/* 主要内容卡片 */}
-        <div className="mt-48">
+        <div className="mt-32">
           <Card className="border-0 shadow-2xl bg-white/50 backdrop-blur-sm overflow-hidden rounded-3xl">
             <CardContent className="">
               {/* 2x2 网格布局 */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2">
                 {imageList.length > 0 && imageList.map((item, index) => (
                   <div
                     key={index}
                     className="relative aspect-square bg-gray-100 rounded-2xl overflow-hidden border-4 border-gray-800 shadow-lg"
                   >
-                    <Image src={item.startsWith('data:image') ? item : (item ? `data:image/png;base64,${item}` : "/placeholder.svg")} alt={index} fill className="object-cover" />
+                    <Image src={item.imageUrl.startsWith('https') ? item.imageUrl : (item.imageUrl.startsWith('data:image') ? item.imageUrl : (item.imageUrl ? `data:image/png;base64,${item.imageUrl}` : "/placeholder.svg"))} alt={index} fill className="object-cover" />
+                    {/* 在图片底部添加运动类型文字标签 */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gray-800 bg-opacity-70 text-white text-center py-1">
+                      {item.sportType}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -132,8 +141,15 @@ function ImageDetailContent() {
         {/* 以下内容移动到屏幕最下面 */}
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#fff4dd]">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-              <QrCode className="w-8 h-8 text-gray-600" />
+            <div className="w-12 h-12 flex items-center justify-center">
+              <Image
+                src="https://scgc-sctv-bucket.oss-cn-shenzhen.aliyuncs.com/shiyunhui/material/scgc_logo.png"
+                alt="SCGC Logo"
+                width={16}
+                height={16}
+                className="w-full h-full"
+
+              />
             </div>
             <div className="flex-1">
               <p className="font-bold text-gray-800 mb-1">解锁我的AI专属运动形象</p>
