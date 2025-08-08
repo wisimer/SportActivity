@@ -1,0 +1,59 @@
+{
+  "name": "sports-activity-page",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev",
+    "lint": "next lint",
+    "start": "next start"
+  },
+  "browserslist": [
+    "> 0.5%",
+    "last 2 versions",
+    "Firefox ESR",
+    "not dead",
+    "Android >= 4.4",
+    "iOS >= 9"
+  ],
+  "dependencies": {
+    "@radix-ui/react-dialog": "latest",
+    "@radix-ui/react-label": "latest",
+    "@radix-ui/react-progress": "latest",
+    "@radix-ui/react-radio-group": "latest",
+    "@react-three/drei": "latest",
+    "@react-three/fiber": "latest",
+    "class-variance-authority": "^0.7.1",
+    "classlist-polyfill": "^1.2.0",
+    "clsx": "^2.1.1",
+    "core-js": "latest",
+    "es6-promise": "^4.2.8",
+    "expo": "latest",
+    "expo-asset": "latest",
+    "expo-file-system": "latest",
+    "expo-gl": "latest",
+    "intersection-observer": "^0.12.2",
+    "lucide-react": "^0.454.0",
+    "next": "15.2.4",
+    "react": "^19",
+    "react-dom": "^19",
+    "react-native": "latest",
+    "regenerator-runtime": "latest",
+    "resize-observer-polyfill": "^1.5.1",
+    "tailwind-merge": "^2.5.5",
+    "tailwindcss": "^3.3.6",
+    "tailwindcss-animate": "^1.0.7",
+    "three": "latest",
+    "url-polyfill": "^1.1.12",
+    "url-search-params-polyfill": "^8.1.1",
+    "whatwg-fetch": "^3.6.17"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/three": "^0.158.0",
+    "postcss": "^8.5",
+    "typescript": "^5"
+  }
+}
